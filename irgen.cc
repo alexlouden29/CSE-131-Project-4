@@ -8,9 +8,11 @@ llvm::Type *IRGenerator::GetType(Type* astTy) const
 {
   llvm::Type *ty = NULL;
   if ( astTy == Type::intType ) {
-    ty = llvm::Type::getInt32Ty(*context);
+    ty = IRGenerator::GetIntType();
   } else if ( astTy == Type::boolType ) {
-    //Fill in the rest
+    ty = IRGenerator::GetBoolType();
+  } else if ( astTy == Type::floatType ) {
+    ty = IRGenerator::GetFloatType();
   }
   return ty;
 }
