@@ -4,6 +4,16 @@
  */
 
 #include "irgen.h"
+llvm::Type *IRGenerator::GetType(Type* astTy) const
+{
+  llvm::Type *ty = NULL;
+  if ( astTy == Type::intType ) {
+    ty = llvm::Type::getInt32Ty(*context);
+  } else if ( astTy == Type::boolType ) {
+    //Fill in the rest
+  }
+  return ty;
+}
 
 IRGenerator::IRGenerator() :
     context(NULL),
