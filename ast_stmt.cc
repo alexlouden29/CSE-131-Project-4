@@ -23,7 +23,7 @@ void Program::PrintChildren(int indentLevel) {
     printf("\n");
 }
 
-void Program::Emit() {
+llvm::Value* Program::Emit() {
     // TODO:
     // This is just a reference for you to get started
     //
@@ -33,8 +33,9 @@ void Program::Emit() {
     IRGenerator irgen;
     llvm::Module *mod = irgen.GetOrCreateModule("mod.bc");
     for(int x = 0; x < decls->NumElements(); x++){
-        decls->Emit();
+        decls->Nth(x)->Emit();
     }
+    return NULL;
     /*
     IRGenerator irgen;
     llvm::Module *mod = irgen.GetOrCreateModule("Name_the_Module.bc");

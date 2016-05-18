@@ -32,7 +32,7 @@ class Program : public Node
      Program(List<Decl*> *declList);
      const char *GetPrintNameForNode() { return "Program"; }
      void PrintChildren(int indentLevel);
-     virtual void Emit();
+     virtual llvm::Value* Emit();
 };
 
 class Stmt : public Node

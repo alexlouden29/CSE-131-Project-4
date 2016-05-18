@@ -41,6 +41,8 @@
 #include "location.h"
 #include <iostream>
 
+#include "llvm/IR/Value.h"
+
 using namespace std;
 
 class SymbolTable;
@@ -68,7 +70,7 @@ class Node  {
     void Print(int indentLevel, const char *label = NULL); 
     virtual void PrintChildren(int indentLevel)  {}
 
-    virtual llvm::Value* Emit() {}
+    virtual llvm::Value* Emit() {return NULL;}
 };
    
 

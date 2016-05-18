@@ -6,7 +6,20 @@
 #include "ast_type.h"
 #include "ast_stmt.h"
 #include "symtable.h"        
+
+llvm::Value* VarDecl::Emit(){
+    IRGenerator irgen;
+    llvm::Module *mod  = irgen.GetOrCreateModule("mod.bc");
+
+
+    return NULL;
+    
+}
          
+llvm::Value* FnDecl::Emit(){
+    return NULL;
+}
+
 Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
     Assert(n != NULL);
     (id=n)->SetParent(this); 
