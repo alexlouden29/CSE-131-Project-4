@@ -31,6 +31,12 @@ void Program::Emit() {
     // for individual node to fill in the module structure and instructions.
     //
     IRGenerator irgen;
+    llvm::Module *mod = irgen.GetOrCreateModule("mod.bc");
+    for(int x = 0; x < decls->NumElements(); x++){
+        decls->Emit();
+    }
+    /*
+    IRGenerator irgen;
     llvm::Module *mod = irgen.GetOrCreateModule("Name_the_Module.bc");
 
     // create a function signature
@@ -56,6 +62,7 @@ void Program::Emit() {
 
     // write the BC into standard output
     llvm::WriteBitcodeToFile(mod, llvm::outs());
+    */
 }
 
 StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
