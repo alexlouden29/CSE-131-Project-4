@@ -30,8 +30,7 @@ llvm::Value* Program::Emit() {
     // You can use this as a template and create Emit() function
     // for individual node to fill in the module structure and instructions.
     //
-    IRGenerator irgen;
-    llvm::Module *mod = irgen.GetOrCreateModule("mod.bc");
+    llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
     for(int x = 0; x < decls->NumElements(); x++){
         decls->Nth(x)->Emit();
     }

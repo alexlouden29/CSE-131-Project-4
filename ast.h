@@ -43,17 +43,20 @@
 
 #include "llvm/IR/Value.h"
 
+
 using namespace std;
 
 class SymbolTable;
 class MyStack;
 class FnDecl;
+class IRGenerator;
 
 class Node  {
   protected:
     yyltype *location;
     Node *parent;
     static SymbolTable *symtable;
+    static IRGenerator *irgen;
 
   public:
     Node(yyltype loc);

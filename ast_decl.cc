@@ -9,13 +9,12 @@
 #include "ast.h"
 
 llvm::Value* VarDecl::Emit(){
-    IRGenerator irgen;
-    llvm::Module *mod  = irgen.GetOrCreateModule("mod.bc");
-    llvm::Type *t = irgen.GetType(this->GetType());
+    llvm::Module *mod  = irgen->GetOrCreateModule("mod.bc");
+    llvm::Type *t = irgen->GetType(this->GetType());
 
     if (symtable->globalScope == true){
         //TODO: check if vardecl is constant
-        llvm::GlobalVariable *var = new llvm::GlobalVariable(*irgen.GetOrCreateModule("mod.bc"), t, false, llvm::GlobalValue::ExternalLinkage, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName());
+        llvm::GlobalVariable *var = new llvm::GlobalVariable(*irgen->GetOrCreateModule("mod.bc"), t, false, llvm::GlobalValue::ExternalLinkage, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName());
     }
     /*
     else{
@@ -28,23 +27,22 @@ llvm::Value* VarDecl::Emit(){
 }
          
 llvm::Value* FnDecl::Emit(){
-    IRGenerator irgen;
-    llvm::Module *mod = irgen.GetOrCreateModule("mod.bc");
-    llvm::Type *t = irgen.GetType(this->GetType());
+    llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
+    llvm::Type *t = irgen->GetType(this->GetType());
     char* name = this->GetIdentifier()->GetName();
 
     std::vector<llvm::Type*> argTypes;
     List<VarDecl*> *args = this->GetFormals();
     for(int x = 0; x < args->NumElements(); x++){
         VarDecl* d = args->Nth(x);
-        argTypes.push_back(irgen.GetType(d->GetType()));
+        argTypes.push_back(irgen->GetType(d->GetType()));
     }
     llvm::ArrayRef<llvm::Type*> argArray(argTypes);
 
     Type *returnType = this->GetType();
 
     //TODO: third argument is bool isVarArg. What does that mean?
-    llvm::FunctionType *funcTy = llvm::FunctionType::get(irgen.GetType(returnType), argArray, false);
+    llvm::FunctionType *funcTy = llvm::FunctionType::get(irgen->GetType(returnType), argArray, false);
     llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction(name, funcTy));
 
     //TODO: loop through f to get the arg and set the name of the arg
