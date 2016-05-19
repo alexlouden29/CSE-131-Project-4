@@ -34,6 +34,9 @@ llvm::Value* Program::Emit() {
     for(int x = 0; x < decls->NumElements(); x++){
         decls->Nth(x)->Emit();
     }
+
+    llvm::WriteBitcodeToFile(mod, llvm::outs());
+
     return NULL;
     /*
     IRGenerator irgen;
@@ -70,8 +73,7 @@ llvm::Value* ReturnStmt::Emit(){
     llvm::Value *returnExpr = e->Emit();
     llvm::LLVMContext *context = irgen->GetContext();
     llvm::BasicBlock *bb = irgen->GetBasicBlock();
-    llvm::ReturnInst::Create( *context, returnExpr, bb);
-    return NULL;
+    return llvm::ReturnInst::Create( *context, returnExpr, bb);
 }
 
 llvm::Value* StmtBlock::Emit(){
