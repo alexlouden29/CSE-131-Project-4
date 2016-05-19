@@ -47,9 +47,18 @@ llvm::Value* FnDecl::Emit(){
 
     //TODO: loop through f to get the arg and set the name of the arg
     llvm::Argument *arg = f->arg_begin();
+    int x = 0;
     for(; arg != f->arg_end(); arg++){
-        
+        VarDecl* d = args->Nth(x);
+        x++;
+        arg->setName(d-> GetIdentifier() -> GetName());
     }
+    
+    //Creating and inserting a basic block into the function
+    llvm::LLVMContext *context = irgen->GetContext();
+    llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f);
+    irgen->SetBasicBlock(bb);
+    this->body->Emit();
     return NULL;
 }
 

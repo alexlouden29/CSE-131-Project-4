@@ -65,6 +65,69 @@ llvm::Value* Program::Emit() {
     */
 }
 
+llvm::Value* StmtBlock::Emit(){
+    return NULL;
+}
+
+llvm::Value* DeclStmt::Emit(){
+    return NULL;
+
+}
+
+llvm::Value* ConditionalStmt::Emit(){
+    return NULL;
+
+}
+
+llvm::Value* LoopStmt::Emit(){
+    return NULL;
+
+}
+
+llvm::Value* ForStmt::Emit(){
+    return NULL;
+
+}
+
+llvm::Value* WhileStmt::Emit(){
+    return NULL;
+}
+
+llvm::Value* IfStmt::Emit(){
+    return NULL;
+}
+
+llvm::Value* BreakStmt::Emit(){
+    return NULL;
+}
+
+llvm::Value* ContinueStmt::Emit(){
+    return NULL;
+}
+
+llvm::Value* ReturnStmt::Emit(){
+    return NULL;
+}
+
+llvm::Value* SwitchLabel::Emit(){
+    return NULL;
+}
+
+llvm::Value* Case::Emit(){
+    return NULL;
+}
+
+llvm::Value* Default::Emit(){
+    return NULL;
+}
+
+llvm::Value* SwitchStmt::Emit(){
+    return NULL;
+}
+
+
+
+
 StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
     Assert(d != NULL && s != NULL);
     (decls=d)->SetParentAll(this);
