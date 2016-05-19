@@ -65,6 +65,15 @@ llvm::Value* Program::Emit() {
     */
 }
 
+llvm::Value* ReturnStmt::Emit(){
+    Expr *e = this -> expr;
+    llvm::Value *returnExpr = e->Emit();
+    llvm::LLVMContext *context = irgen->GetContext();
+    llvm::BasicBlock *bb = irgen->GetBasicBlock();
+    llvm::ReturnInst::Create( *context, returnExpr, bb);
+    return NULL;
+}
+
 llvm::Value* StmtBlock::Emit(){
     return NULL;
 }
@@ -102,10 +111,6 @@ llvm::Value* BreakStmt::Emit(){
 }
 
 llvm::Value* ContinueStmt::Emit(){
-    return NULL;
-}
-
-llvm::Value* ReturnStmt::Emit(){
     return NULL;
 }
 

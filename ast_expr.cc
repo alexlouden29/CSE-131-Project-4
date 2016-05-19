@@ -9,6 +9,19 @@
 #include "ast_decl.h"
 #include "symtable.h"
 
+
+llvm::Value* ArithmeticExpr::Emit(){
+    llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
+
+    llvm::Type *intTy = irgen->GetIntType();
+    llvm::Value *val = llvm::ConstantInt::get(intTy, 1);
+    llvm::BasicBlock *bb = irgen->GetBasicBlock();
+    llvm::Function *f = irgen->GetFunction();
+    llvm::Value *sum = llvm::BinaryOperator::CreateAdd(f->arg_begin(), val, "", bb);
+    return sum;
+}
+
+
 IntConstant::IntConstant(yyltype loc, int val) : Expr(loc) {
     value = val;
 }

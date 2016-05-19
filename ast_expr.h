@@ -29,6 +29,8 @@ class Expr : public Stmt
     friend std::ostream& operator<< (std::ostream& stream, Expr * expr) {
         return stream << expr->GetPrintNameForNode();
     }
+
+    virtual llvm::Value* Emit() {return NULL;}
 };
 
 class ExprError : public Expr
@@ -124,6 +126,7 @@ class ArithmeticExpr : public CompoundExpr
     ArithmeticExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     ArithmeticExpr(Operator *op, Expr *rhs) : CompoundExpr(op,rhs) {}
     const char *GetPrintNameForNode() { return "ArithmeticExpr"; }
+    llvm::Value* Emit();
 };
 
 class RelationalExpr : public CompoundExpr 

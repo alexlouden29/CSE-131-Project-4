@@ -45,6 +45,8 @@ llvm::Value* FnDecl::Emit(){
     llvm::FunctionType *funcTy = llvm::FunctionType::get(irgen->GetType(returnType), argArray, false);
     llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction(name, funcTy));
 
+    irgen->SetFunction(f);
+
     //TODO: loop through f to get the arg and set the name of the arg
     llvm::Argument *arg = f->arg_begin();
     int x = 0;
