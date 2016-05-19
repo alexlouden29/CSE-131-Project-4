@@ -6,17 +6,52 @@
 #include "ast_type.h"
 #include "ast_stmt.h"
 #include "symtable.h"        
+#include "ast.h"
 
 llvm::Value* VarDecl::Emit(){
     IRGenerator irgen;
     llvm::Module *mod  = irgen.GetOrCreateModule("mod.bc");
+    llvm::Type *t = irgen.GetType(this->GetType());
 
-
+    if (symtable->globalScope == true){
+        //TODO: check if vardecl is constant
+        llvm::GlobalVariable *var = new llvm::GlobalVariable(*irgen.GetOrCreateModule("mod.bc"), t, false, llvm::GlobalValue::ExternalLinkage, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName());
+    }
+    /*
+    else{
+        //local variable
+        //TODO: check if vardecl is constant
+        llvm::AllocaInst(t, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName(),);
+    }
+    */
     return NULL;
-    
 }
          
 llvm::Value* FnDecl::Emit(){
+    IRGenerator irgen;
+    llvm::Module *mod = irgen.GetOrCreateModule("mod.bc");
+    llvm::Type *t = irgen.GetType(this->GetType());
+    char* name = this->GetIdentifier()->GetName();
+
+    std::vector<llvm::Type*> argTypes;
+    List<VarDecl*> *args = this->GetFormals();
+    for(int x = 0; x < args->NumElements(); x++){
+        VarDecl* d = args->Nth(x);
+        argTypes.push_back(irgen.GetType(d->GetType()));
+    }
+    llvm::ArrayRef<llvm::Type*> argArray(argTypes);
+
+    Type *returnType = this->GetType();
+
+    //TODO: third argument is bool isVarArg. What does that mean?
+    llvm::FunctionType *funcTy = llvm::FunctionType::get(irgen.GetType(returnType), argArray, false);
+    llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction(name, funcTy));
+
+    //TODO: loop through f to get the arg and set the name of the arg
+    llvm::Argument *arg = f->arg_begin();
+    for(; arg != f->arg_end(); arg++){
+        
+    }
     return NULL;
 }
 
@@ -79,4 +114,3 @@ void FnDecl::PrintChildren(int indentLevel) {
     if (formals) formals->PrintAll(indentLevel+1, "(formals) ");
     if (body) body->Print(indentLevel+1, "(body) ");
 }
-

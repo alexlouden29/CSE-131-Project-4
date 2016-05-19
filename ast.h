@@ -53,6 +53,7 @@ class Node  {
   protected:
     yyltype *location;
     Node *parent;
+    static SymbolTable *symtable;
 
   public:
     Node(yyltype loc);
