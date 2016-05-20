@@ -80,6 +80,7 @@ llvm::Value* FnDecl::Emit(){
         llvm::StoreInst( val, symtable->lookupInScope(name, symtable->currScope()), irgen->GetBasicBlock());
         x++;
         arg->setName(d-> GetIdentifier() -> GetName());
+
     }
     
     //calling emit on function body
