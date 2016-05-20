@@ -21,7 +21,16 @@ llvm::Value* VarDecl::Emit(){
     else{
         //local variable
         //TODO: check if vardecl is constant
-        llvm::Value* val = new llvm::AllocaInst(t, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+        if(t == NULL){
+          return NULL;
+        }
+        if(this->GetIdentifier()->GetName() == NULL){
+          return NULL;
+        }
+        if(irgen->GetBasicBlock() == NULL){
+          return NULL;
+        }
+        llvm::Value* val = new llvm::AllocaInst(t, this->GetIdentifier()->GetName(), irgen->GetBasicBlock());
         symtable->addSymbol(this->GetIdentifier()->GetName(), val); 
     }
     
@@ -45,9 +54,6 @@ llvm::Value* FnDecl::Emit(){
 
     Type *returnType = this->GetType();
 
-    //TODO: third argument is bool isVarArg. What does that mean?
-    llvm::FunctionType *funcTy = llvm::FunctionType::get(irgen->GetType(returnType), argArray, false);
-    llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction(name, funcTy));
 
     irgen->SetFunction(f);
 
