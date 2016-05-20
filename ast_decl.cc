@@ -20,8 +20,8 @@ llvm::Value* VarDecl::Emit(){
     else{
         //local variable
         //TODO: check if vardecl is constant
-        llvm::AllocaInst(t, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName(), irgen->GetBasicBlock());
-        
+        llvm::Value* val = new llvm::AllocaInst(t, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+        symtable->addSymbol(this->GetIdentifier()->GetName(), val); 
     }
     
     return NULL;
