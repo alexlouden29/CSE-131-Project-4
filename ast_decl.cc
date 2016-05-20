@@ -21,7 +21,10 @@ llvm::Value* VarDecl::Emit(){
     else{
         //local variable
         //TODO: check if vardecl is constant
-        llvm::Value* val = new llvm::AllocaInst(t, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+        llvm::Constant *con = llvm::Constant::getNullValue(t);
+        char *c = this->GetIdentifier()->GetName();
+        llvm::BasicBlock *bb = irgen->GetBasicBlock();
+        llvm::Value* val = new llvm::AllocaInst(t, c, bb);
         symtable->addSymbol(this->GetIdentifier()->GetName(), val); 
     }
     
@@ -30,15 +33,18 @@ llvm::Value* VarDecl::Emit(){
          
 llvm::Value* FnDecl::Emit(){
     symtable->globalScope = false;
+ 
+    //creating module
     llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
+
     llvm::Type *t = irgen->GetType(this->GetType());
     char* name = this->GetIdentifier()->GetName();
 
+    //creating list of args
     std::vector<llvm::Type*> argTypes;
     List<VarDecl*> *args = this->GetFormals();
     for(int x = 0; x < args->NumElements(); x++){
         VarDecl* d = args->Nth(x);
-        d->Emit();
         argTypes.push_back(irgen->GetType(d->GetType()));
     }
     llvm::ArrayRef<llvm::Type*> argArray(argTypes);
@@ -46,11 +52,16 @@ llvm::Value* FnDecl::Emit(){
     Type *returnType = this->GetType();
 
     //TODO: third argument is bool isVarArg. What does that mean?
+    //Creating function
     llvm::FunctionType *funcTy = llvm::FunctionType::get(irgen->GetType(returnType), argArray, false);
     llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction(name, funcTy));
 
     irgen->SetFunction(f);
 
+    //Creating and inserting a basic block into the function
+    llvm::LLVMContext *context = irgen->GetContext();
+    llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f);
+    irgen->SetBasicBlock(bb);
 
     //TODO: loop through f to get the arg and set the name of the arg
     //llvm::Argument *arg = f->arg_begin();
@@ -58,17 +69,20 @@ llvm::Value* FnDecl::Emit(){
     int x = 0;
     for(; arg != f->arg_end(); arg++){
         VarDecl* d = args->Nth(x);
+        d->Emit();
         string name = d->GetIdentifier()->GetName();
+        
+        if( d->GetAssignTo() == NULL){
+            return NULL;
+        }
+        
         llvm::Value* val = d->GetAssignTo()->Emit();
         llvm::StoreInst( val, symtable->lookupInScope(name, symtable->currScope()), irgen->GetBasicBlock());
         x++;
         arg->setName(d-> GetIdentifier() -> GetName());
     }
     
-    //Creating and inserting a basic block into the function
-    llvm::LLVMContext *context = irgen->GetContext();
-    llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f);
-    irgen->SetBasicBlock(bb);
+    //calling emit on function body
     llvm::Value* returnExpr = this->body->Emit();
     return f;
 }
