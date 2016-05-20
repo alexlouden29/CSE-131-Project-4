@@ -59,8 +59,9 @@ llvm::Value* FnDecl::Emit(){
     llvm::LLVMContext *context = irgen->GetContext();
     llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f);
     irgen->SetBasicBlock(bb);
-    this->body->Emit();
-    return NULL;
+    llvm::Value* returnExpr = this->body->Emit();
+    llvm::ReturnInst::Create(*context, returnExpr, bb);
+    return f;
 }
 
 Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
