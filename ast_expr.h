@@ -93,6 +93,7 @@ class VarExpr : public Expr
     const char *GetPrintNameForNode() { return "VarExpr"; }
     void PrintChildren(int indentLevel);
     Identifier *GetIdentifier() {return id;}
+    llvm::Value* Emit();
 };
 
 class Operator : public Node 

@@ -34,6 +34,9 @@ llvm::Value* IntConstant::Emit(){
     return llvm::ConstantInt::get(intTy, this->value);
 }
 
+llvm::Value* VarExpr::Emit(){
+    return NULL;
+}
 
 IntConstant::IntConstant(yyltype loc, int val) : Expr(loc) {
     value = val;
