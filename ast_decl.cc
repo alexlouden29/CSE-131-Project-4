@@ -15,6 +15,7 @@ llvm::Value* VarDecl::Emit(){
     if (symtable->globalScope == true){
         //TODO: check if vardecl is constant
         llvm::GlobalVariable *var = new llvm::GlobalVariable(*irgen->GetOrCreateModule("mod.bc"), t, false, llvm::GlobalValue::ExternalLinkage, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName());
+        symtable->addSymbol(this->GetIdentifier()->GetName(), var);
         return var;
     }
 

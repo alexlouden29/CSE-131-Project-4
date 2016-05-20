@@ -48,7 +48,7 @@ llvm::Value* FloatConstant::Emit(){
 
 llvm::Value* VarExpr::Emit(){
     string exprName = this->GetIdentifier()->GetName();
-    llvm::Value* v = symtable->lookupInScope(exprName, symtable->currScope());
+    llvm::Value* v = symtable->lookup(exprName);
     llvm::Value* lInst = new llvm::LoadInst( v, exprName, irgen->GetBasicBlock() );
     return lInst;
 }
