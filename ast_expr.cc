@@ -13,19 +13,14 @@
 llvm::Value* ArithmeticExpr::Emit(){
     Operator *op = this->op;
     if(op->IsOp("+")){
-        llvm::Module *mod = irgen ->GetOrCreateModule("mod.bc");
+        llvm::BasicBlock *bb = irgen->GetBasicBlock();
         llvm::Value *rhs = this->right->Emit();
         llvm::Value *lhs = this->left->Emit();
-    }
-    llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
 
-    llvm::Type *intTy = irgen->GetIntType();
-    llvm::Value *val = llvm::ConstantInt::get(intTy, 1);
-    llvm::BasicBlock *bb = irgen->GetBasicBlock();
-    llvm::Function *f = irgen->GetFunction();
-    llvm::Argument *arg = f->arg_begin();
-    llvm::Value *sum = llvm::BinaryOperator::CreateAdd(arg, val, "", bb);
-    return sum;
+        llvm::Value *sum = llvm::BinaryOperator::CreateAdd(lhs, rhs, "", bb);
+        return sum;
+    }
+    return NULL;
 }
 
 llvm::Value* IntConstant::Emit(){
