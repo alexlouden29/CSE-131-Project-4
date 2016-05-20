@@ -36,6 +36,34 @@ llvm::Value* RelationalExpr::Emit(){
     return NULL;
 }
 
+llvm::Value* PostfixExpr::Emit(){
+    //getting the value at the pointer
+    llvm::Value *oldVal = this->left->Emit(); //"loading from pointer"
+
+    //getting the pointer of the value
+    llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(oldVal);
+    llvm::Value *location = l->getPointerOperand(); //getting pointer?
+
+    //getting the basic block
+    llvm::BasicBlock *bb = irgen->GetBasicBlock();
+
+    Operator *op = this->op;
+
+    if( oldVal->getType() == irgen->GetType(Type::intType)){
+        if( op->IsOp("--") ){
+            //creating binary op
+            llvm::Type *intTy = irgen->GetIntType();
+            llvm::Value *one = llvm::ConstantInt::get(intTy, 1);
+            llvm::Value *inc = llvm::BinaryOperator::CreateSub(oldVal, one, "", bb);
+            //storing new value
+            llvm::Value* sInst = new llvm::StoreInst(location, inc, bb);
+        }
+    }
+
+    return oldVal;
+    //llvm::Value *oldVal = new llvm::LoadInst( lhs, this->GetIdentifier()->GetName(), irgen->GetBasicBlock() );
+}
+
 llvm::Value* IntConstant::Emit(){
     llvm::Type *intTy = irgen->GetIntType();
     return llvm::ConstantInt::get(intTy, this->value);
