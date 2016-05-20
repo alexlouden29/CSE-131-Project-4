@@ -78,6 +78,7 @@ llvm::Value* FnDecl::Emit(){
             return NULL;
         }
        */
+
         
         llvm::Value* val = d->GetAssignTo()->Emit();
         llvm::StoreInst( val, symtable->lookupInScope(name, symtable->currScope()), irgen->GetBasicBlock());
