@@ -15,6 +15,7 @@ llvm::Value* VarDecl::Emit(){
     if (symtable->globalScope == true){
         //TODO: check if vardecl is constant
         llvm::GlobalVariable *var = new llvm::GlobalVariable(*irgen->GetOrCreateModule("mod.bc"), t, false, llvm::GlobalValue::ExternalLinkage, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName());
+        return var;
     }
 
     
@@ -26,13 +27,14 @@ llvm::Value* VarDecl::Emit(){
         llvm::BasicBlock *bb = irgen->GetBasicBlock();
         llvm::Value* val = new llvm::AllocaInst(t, c, bb);
         symtable->addSymbol(this->GetIdentifier()->GetName(), val); 
+        return val;
     }
-    
-    return NULL;
 }
-         
+
 llvm::Value* FnDecl::Emit(){
     symtable->globalScope = false;
+    scope s;
+    symtable->pushScope(&s);
  
     //creating module
     llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
@@ -69,12 +71,13 @@ llvm::Value* FnDecl::Emit(){
     int x = 0;
     for(; arg != f->arg_end(); arg++){
         VarDecl* d = args->Nth(x);
-        d->Emit();
+        llvm::Value* v = d->Emit();
         string name = d->GetIdentifier()->GetName();
-        
+        /*
         if( d->GetAssignTo() == NULL){
             return NULL;
         }
+       */
         
         llvm::Value* val = d->GetAssignTo()->Emit();
         llvm::StoreInst( val, symtable->lookupInScope(name, symtable->currScope()), irgen->GetBasicBlock());
