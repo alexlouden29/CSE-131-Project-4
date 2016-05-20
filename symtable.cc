@@ -9,9 +9,7 @@
 
 SymbolTable::SymbolTable(){
 
-  llvm::Value* llvmValue = NULL;
-
-  map<string, Decl*> s1;
+  map<string, llvm::Value*> s1;
 
   vector<scope> scopess;
   scopes = scopess;
@@ -41,24 +39,24 @@ void SymbolTable::popScope(){
   scopes.pop_back();
 }
 
-void SymbolTable::addSymbol(string key, Decl* decl){
+void SymbolTable::addSymbol(string key, llvm::Value* val){
   scope* m = &scopes.back();
-  m->insert(pair<string,Decl*>(key,decl));
+  m->insert(pair<string,llvm::Value*>(key,val));
 }
 
-Decl* SymbolTable::lookup(string key){
-  Decl* d = NULL;
+llvm::Value* SymbolTable::lookup(string key){
+  llvm::Value* v = NULL;
   for(vector<scope>::reverse_iterator vectorIt = scopes.rbegin(); vectorIt != scopes.rend(); ++vectorIt){
     scope* s = &(*vectorIt);
-    d = lookupInScope(key, s);
-    if(d != NULL){
+    v = lookupInScope(key, s);
+    if(v != NULL){
       break;
     }
   }
-  return d;
+  return v;
 }
 
-Decl* SymbolTable::lookupInScope(string key, scope *s){
+llvm::Value* SymbolTable::lookupInScope(string key, scope *s){
   int i = s->count(key);
   if(i > 0){
     return s->at(key);

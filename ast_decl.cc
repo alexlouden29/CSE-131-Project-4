@@ -21,12 +21,14 @@ llvm::Value* VarDecl::Emit(){
         //local variable
         //TODO: check if vardecl is constant
         llvm::AllocaInst(t, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+        
     }
     
     return NULL;
 }
          
 llvm::Value* FnDecl::Emit(){
+    symtable->globalScope = false;
     llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
     llvm::Type *t = irgen->GetType(this->GetType());
     char* name = this->GetIdentifier()->GetName();
@@ -35,6 +37,7 @@ llvm::Value* FnDecl::Emit(){
     List<VarDecl*> *args = this->GetFormals();
     for(int x = 0; x < args->NumElements(); x++){
         VarDecl* d = args->Nth(x);
+        d->Emit();
         argTypes.push_back(irgen->GetType(d->GetType()));
     }
     llvm::ArrayRef<llvm::Type*> argArray(argTypes);

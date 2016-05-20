@@ -18,7 +18,7 @@
 #include "irgen.h"
 
 using namespace std;
-typedef map<string, Decl*> scope;
+typedef map<string, llvm::Value*> scope;
 
 class SymbolTable {
   protected:
@@ -27,7 +27,6 @@ class SymbolTable {
   public:
     SymbolTable(); //constructor
 
-    llvm::Value* llvmValue;
 
     bool ifFlag, elseFlag, elifFlag;
     bool whileFlag, forFlag;
@@ -41,10 +40,10 @@ class SymbolTable {
 
     void pushScope(scope *s);
     void popScope();
-    void addSymbol(string key, Decl* decl);
-    Decl* lookup(string key);
+    void addSymbol(string key, llvm::Value* val);
+    llvm::Value* lookup(string key);
     scope* currScope();
-    Decl* lookupInScope(string key, scope *s);
+    llvm::Value* lookupInScope(string key, scope *s);
     int size();
    
 };
