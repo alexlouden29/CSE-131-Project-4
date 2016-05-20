@@ -55,6 +55,7 @@ class VarDecl : public Decl
     void PrintChildren(int indentLevel);
     Type *GetType() const { return type; }
     llvm::Value* Emit();
+    Expr *GetAssignTo() { return assignTo; }
 };
 
 class VarDeclError : public VarDecl

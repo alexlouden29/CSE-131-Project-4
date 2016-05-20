@@ -29,11 +29,7 @@ llvm::Value* VarDecl::Emit(){
 }
          
 llvm::Value* FnDecl::Emit(){
-<<<<<<< HEAD
-    symtable->globalScope = true;
-=======
     symtable->globalScope = false;
->>>>>>> 89575657837fa10d66524387bca97526bbfeb66c
     llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
     llvm::Type *t = irgen->GetType(this->GetType());
     char* name = this->GetIdentifier()->GetName();
@@ -63,8 +59,8 @@ llvm::Value* FnDecl::Emit(){
     for(; arg != f->arg_end(); arg++){
         VarDecl* d = args->Nth(x);
         string name = d->GetIdentifier()->GetName();
-        llvm::Value* val = d->assignTo->emit();
-        StoreInst( val, symtable->lookupInScope(name), irgen->GetBasicBlock());
+        llvm::Value* val = d->GetAssignTo()->Emit();
+        llvm::StoreInst( val, symtable->lookupInScope(name, symtable->currScope()), irgen->GetBasicBlock());
         x++;
         arg->setName(d-> GetIdentifier() -> GetName());
     }
