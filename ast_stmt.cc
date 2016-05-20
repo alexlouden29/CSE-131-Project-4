@@ -73,11 +73,19 @@ llvm::Value* ReturnStmt::Emit(){
     llvm::Value *returnExpr = e->Emit();
     llvm::LLVMContext *context = irgen->GetContext();
     llvm::BasicBlock *bb = irgen->GetBasicBlock();
-    //return llvm::ReturnInst::Create( *context, returnExpr, bb);
-    return returnExpr;
+    llvm::ReturnInst::Create( *context, returnExpr, bb);
+    return NULL;
 }
 
 llvm::Value* StmtBlock::Emit(){
+    for(int x = 0; x < decls->NumElements(); x++ ){
+      VarDecl* decl = decls->Nth(x);
+      decl->Emit();
+    }
+    for(int x = 0; x < stmts->NumElements(); x++ ){
+      Stmt* stmt = stmts->Nth(x);
+      stmt->Emit();
+    }
     return NULL;
 }
 
