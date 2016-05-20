@@ -74,7 +74,7 @@ llvm::Value* FnDecl::Emit(){
         llvm::Value* v = d->Emit();
         string name = d->GetIdentifier()->GetName();
         argIter->setName(name);
-        llvm::StoreInst( argIter, v, irgen->GetBasicBlock());
+        llvm::Value* sints = new llvm::StoreInst( argIter, v, irgen->GetBasicBlock());
         x++;
 
     }
