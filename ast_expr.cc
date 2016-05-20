@@ -12,7 +12,7 @@
 
 llvm::Value* ArithmeticExpr::Emit(){
     Operator *op = this->op;
-    if(op->IsOp("+")){
+    if( op->IsOp("+") ){
         llvm::BasicBlock *bb = irgen->GetBasicBlock();
         llvm::Value *rhs = this->right->Emit();
         llvm::Value *lhs = this->left->Emit();
@@ -23,9 +23,27 @@ llvm::Value* ArithmeticExpr::Emit(){
     return NULL;
 }
 
+llvm::Value* RelationalExpr::Emit(){
+    llvm::Value *lhs = this->left->Emit();
+    llvm::Value *rhs = this->right->Emit();
+    llvm::BasicBlock *bb = irgen->GetBasicBlock();
+    if( (lhs->getType() == irgen->GetType(Type::floatType)) && (rhs->getType() == irgen->GetType(Type::floatType)) ){
+        Operator *op = this->op;
+        if( op->IsOp(">") ){
+            llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OGT, lhs, rhs, "", bb);
+        }
+    }
+    return NULL;
+}
+
 llvm::Value* IntConstant::Emit(){
     llvm::Type *intTy = irgen->GetIntType();
     return llvm::ConstantInt::get(intTy, this->value);
+}
+
+llvm::Value* FloatConstant::Emit(){
+    llvm::Type *fTy = irgen->GetFloatType();
+    return llvm::ConstantFP::get(fTy, this->value);
 }
 
 llvm::Value* VarExpr::Emit(){

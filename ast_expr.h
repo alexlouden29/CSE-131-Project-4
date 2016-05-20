@@ -70,6 +70,7 @@ class FloatConstant: public Expr
     FloatConstant(yyltype loc, double val);
     const char *GetPrintNameForNode() { return "FloatConstant"; }
     void PrintChildren(int indentLevel);
+    llvm::Value* Emit();
 };
 
 class BoolConstant : public Expr 
@@ -136,6 +137,7 @@ class RelationalExpr : public CompoundExpr
   public:
     RelationalExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     const char *GetPrintNameForNode() { return "RelationalExpr"; }
+    llvm::Value *Emit();
 };
 
 class EqualityExpr : public CompoundExpr 
