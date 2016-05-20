@@ -16,6 +16,7 @@ llvm::Value* VarDecl::Emit(){
         //TODO: check if vardecl is constant
         llvm::GlobalVariable *var = new llvm::GlobalVariable(*irgen->GetOrCreateModule("mod.bc"), t, false, llvm::GlobalValue::ExternalLinkage, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName());
     }
+
     
     else{
         //local variable
@@ -27,6 +28,7 @@ llvm::Value* VarDecl::Emit(){
 }
          
 llvm::Value* FnDecl::Emit(){
+    symtable->globalScope = true;
     llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
     llvm::Type *t = irgen->GetType(this->GetType());
     char* name = this->GetIdentifier()->GetName();
@@ -35,6 +37,7 @@ llvm::Value* FnDecl::Emit(){
     List<VarDecl*> *args = this->GetFormals();
     for(int x = 0; x < args->NumElements(); x++){
         VarDecl* d = args->Nth(x);
+        d->Emit();
         argTypes.push_back(irgen->GetType(d->GetType()));
     }
     llvm::ArrayRef<llvm::Type*> argArray(argTypes);
