@@ -21,14 +21,19 @@ llvm::Value* VarDecl::Emit(){
     else{
         //local variable
         //TODO: check if vardecl is constant
-        llvm::AllocaInst(t, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+        llvm::Value* val = new llvm::AllocaInst(t, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName(), irgen->GetBasicBlock());
+        symtable->addSymbol(this->GetIdentifier()->GetName(), val); 
     }
     
     return NULL;
 }
          
 llvm::Value* FnDecl::Emit(){
+<<<<<<< HEAD
     symtable->globalScope = true;
+=======
+    symtable->globalScope = false;
+>>>>>>> 89575657837fa10d66524387bca97526bbfeb66c
     llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
     llvm::Type *t = irgen->GetType(this->GetType());
     char* name = this->GetIdentifier()->GetName();
@@ -57,6 +62,9 @@ llvm::Value* FnDecl::Emit(){
     int x = 0;
     for(; arg != f->arg_end(); arg++){
         VarDecl* d = args->Nth(x);
+        string name = d->GetIdentifier()->GetName();
+        llvm::Value* val = d->assignTo->emit();
+        StoreInst( val, symtable->lookupInScope(name), irgen->GetBasicBlock());
         x++;
         arg->setName(d-> GetIdentifier() -> GetName());
     }
