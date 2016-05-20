@@ -56,7 +56,6 @@ llvm::Value* FnDecl::Emit(){
         VarDecl* d = args->Nth(x);
         x++;
         arg->setName(d-> GetIdentifier() -> GetName());
-        //Betty's comment
     }
     
     //Creating and inserting a basic block into the function
@@ -64,7 +63,6 @@ llvm::Value* FnDecl::Emit(){
     llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f);
     irgen->SetBasicBlock(bb);
     llvm::Value* returnExpr = this->body->Emit();
-    llvm::ReturnInst::Create(*context, returnExpr, bb);
     return f;
 }
 
