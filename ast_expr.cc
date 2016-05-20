@@ -30,7 +30,7 @@ llvm::Value* RelationalExpr::Emit(){
     if( (lhs->getType() == irgen->GetType(Type::floatType)) && (rhs->getType() == irgen->GetType(Type::floatType)) ){
         Operator *op = this->op;
         if( op->IsOp(">") ){
-            llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OGT, lhs, rhs, "", bb);
+            return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OGT, lhs, rhs, "", bb);
         }
     }
     return NULL;
