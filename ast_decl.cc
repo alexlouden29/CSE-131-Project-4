@@ -56,6 +56,7 @@ llvm::Value* FnDecl::Emit(){
         VarDecl* d = args->Nth(x);
         x++;
         arg->setName(d-> GetIdentifier() -> GetName());
+        //Betty's comment
     }
     
     //Creating and inserting a basic block into the function
