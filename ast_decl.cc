@@ -67,23 +67,15 @@ llvm::Value* FnDecl::Emit(){
 
     //TODO: loop through f to get the arg and set the name of the arg
     //llvm::Argument *arg = f->arg_begin();
-    llvm::Function::arg_iterator arg = f->arg_begin();
+    llvm::Function::arg_iterator argIter = f->arg_begin();
     int x = 0;
-    for(; arg != f->arg_end(); arg++){
+    for(; argIter != f->arg_end(); argIter++){
         VarDecl* d = args->Nth(x);
         llvm::Value* v = d->Emit();
         string name = d->GetIdentifier()->GetName();
-        /*
-        if( d->GetAssignTo() == NULL){
-            return NULL;
-        }
-       */
-
-        
-        llvm::Value* val = d->GetAssignTo()->Emit();
-        llvm::StoreInst( val, symtable->lookupInScope(name, symtable->currScope()), irgen->GetBasicBlock());
+        argIter->setName(name);
+        llvm::StoreInst( argIter, v, irgen->GetBasicBlock());
         x++;
-        arg->setName(d-> GetIdentifier() -> GetName());
 
     }
     
