@@ -47,6 +47,7 @@ llvm::Value* FnDecl::Emit(){
 
     irgen->SetFunction(f);
 
+
     //TODO: loop through f to get the arg and set the name of the arg
     //llvm::Argument *arg = f->arg_begin();
     llvm::Function::arg_iterator arg = f->arg_begin();
