@@ -16,6 +16,7 @@ llvm::Value* VarDecl::Emit(){
         //TODO: check if vardecl is constant
         llvm::GlobalVariable *var = new llvm::GlobalVariable(*irgen->GetOrCreateModule("mod.bc"), t, false, llvm::GlobalValue::ExternalLinkage, llvm::Constant::getNullValue(t), this->GetIdentifier()->GetName());
     }
+
     
     else{
         //local variable
@@ -58,8 +59,8 @@ llvm::Value* FnDecl::Emit(){
     for(; arg != f->arg_end(); arg++){
         VarDecl* d = args->Nth(x);
         string name = d->GetIdentifier()->GetName();
-        llvm::Value* val = d->assignTo->Emit();
-        llvm::StoreInst( val, symtable->lookupInScope(name, currScope()), irgen->GetBasicBlock());
+        llvm::Value* val = d->GetAssignTo()->Emit();
+        llvm::StoreInst( val, symtable->lookupInScope(name, symtable->currScope()), irgen->GetBasicBlock());
         x++;
         arg->setName(d-> GetIdentifier() -> GetName());
     }
