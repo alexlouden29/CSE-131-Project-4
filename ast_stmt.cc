@@ -73,7 +73,8 @@ llvm::Value* ReturnStmt::Emit(){
     llvm::Value *returnExpr = e->Emit();
     llvm::LLVMContext *context = irgen->GetContext();
     llvm::BasicBlock *bb = irgen->GetBasicBlock();
-    return llvm::ReturnInst::Create( *context, returnExpr, bb);
+    //return llvm::ReturnInst::Create( *context, returnExpr, bb);
+    return returnExpr;
 }
 
 llvm::Value* StmtBlock::Emit(){

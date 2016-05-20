@@ -17,7 +17,8 @@ llvm::Value* ArithmeticExpr::Emit(){
     llvm::Value *val = llvm::ConstantInt::get(intTy, 1);
     llvm::BasicBlock *bb = irgen->GetBasicBlock();
     llvm::Function *f = irgen->GetFunction();
-    llvm::Value *sum = llvm::BinaryOperator::CreateAdd(f->arg_begin(), val, "", bb);
+    llvm::Argument *arg = f->arg_begin();
+    llvm::Value *sum = llvm::BinaryOperator::CreateAdd(arg, val, "", bb);
     return sum;
 }
 
