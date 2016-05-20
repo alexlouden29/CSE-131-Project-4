@@ -57,6 +57,9 @@ llvm::Value* FnDecl::Emit(){
     int x = 0;
     for(; arg != f->arg_end(); arg++){
         VarDecl* d = args->Nth(x);
+        string name = d->GetIdentifier()->GetName();
+        llvm::Value* val = d->assignTo->emit();
+        StoreInst( val, symtable->lookupInScope(name), irgen->GetBasicBlock());
         x++;
         arg->setName(d-> GetIdentifier() -> GetName());
     }
