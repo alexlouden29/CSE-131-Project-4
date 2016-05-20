@@ -34,6 +34,7 @@ llvm::Value* Program::Emit() {
     llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
     for(int x = 0; x < decls->NumElements(); x++){
         decls->Nth(x)->Emit();
+        
     }
 
     llvm::WriteBitcodeToFile(mod, llvm::outs());

@@ -39,7 +39,9 @@ llvm::Value* FnDecl::Emit(){
     //creating module
     llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
 
-    llvm::Type *t = irgen->GetType(this->GetType());
+    Type *returnType = this->GetType();
+
+    llvm::Type *t = irgen->GetType( returnType );
     char* name = this->GetIdentifier()->GetName();
 
     //creating list of args
@@ -50,8 +52,6 @@ llvm::Value* FnDecl::Emit(){
         argTypes.push_back(irgen->GetType(d->GetType()));
     }
     llvm::ArrayRef<llvm::Type*> argArray(argTypes);
-
-    Type *returnType = this->GetType();
 
     //TODO: third argument is bool isVarArg. What does that mean?
     //Creating function
@@ -78,6 +78,7 @@ llvm::Value* FnDecl::Emit(){
         x++;
 
     }
+
     
     //calling emit on function body
     llvm::Value* returnExpr = this->body->Emit();
