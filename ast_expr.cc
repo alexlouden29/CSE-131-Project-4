@@ -16,7 +16,6 @@ llvm::Value* ArithmeticExpr::Emit(){
         llvm::Module *mod = irgen ->GetOrCreateModule("mod.bc");
         llvm::Value *rhs = this->right->Emit();
         llvm::Value *lhs = this->left->Emit();
-        
     }
     llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
 
@@ -35,7 +34,9 @@ llvm::Value* IntConstant::Emit(){
 }
 
 llvm::Value* VarExpr::Emit(){
-    return NULL;
+    string exprName = this->GetIdentifier()->GetName();
+    llvm::Value* lInst = new llvm::loadInst( symtable->lookupInScope( exprName, symtable->currScope() ), exprName, irgen->GetBasicBlock() );
+    return lInst;
 }
 
 IntConstant::IntConstant(yyltype loc, int val) : Expr(loc) {
