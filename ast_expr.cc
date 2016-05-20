@@ -30,6 +30,8 @@ llvm::Value* ArithmeticExpr::Emit(){
 
             //adding one
             llvm::Value *inc = llvm::BinaryOperator::CreateAdd(oldVal, one, "", bb);
+            llvm::Value* sInst = new llvm::StoreInst(inc, location, bb);
+            
             return inc;
         }
     }
