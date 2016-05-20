@@ -58,6 +58,7 @@ class IntConstant : public Expr
     IntConstant(yyltype loc, int val);
     const char *GetPrintNameForNode() { return "IntConstant"; }
     void PrintChildren(int indentLevel);
+    llvm::Value* Emit();
 };
 
 class FloatConstant: public Expr 
