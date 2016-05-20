@@ -12,6 +12,27 @@
 
 llvm::Value* ArithmeticExpr::Emit(){
     Operator *op = this->op;
+    //pre inc
+    if( this->left == NULL && this->right != NULL){
+        if( op->IsOp("++") ){
+            //getting the value at the pointer
+            llvm::Value *oldVal = this->right->Emit(); //"loading from pointer"
+
+            //getting the pointer of the value
+            llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(oldVal);
+            llvm::Value *location = l->getPointerOperand(); //getting pointer?
+
+            //getting the basic block
+            llvm::BasicBlock *bb = irgen->GetBasicBlock();
+
+            llvm::Type *intTy = irgen->GetIntType();
+            llvm::Value *one = llvm::ConstantInt::get(intTy, 1);
+
+            //adding one
+            llvm::Value *inc = llvm::BinaryOperator::CreateAdd(oldVal, one, "", bb);
+            return inc;
+        }
+    }
     if( op->IsOp("+") ){
         llvm::BasicBlock *bb = irgen->GetBasicBlock();
         llvm::Value *rhs = this->right->Emit();
@@ -47,22 +68,26 @@ llvm::Value* PostfixExpr::Emit(){
     //getting the basic block
     llvm::BasicBlock *bb = irgen->GetBasicBlock();
 
+    llvm::Type *intTy = irgen->GetIntType();
+    llvm::Value *one = llvm::ConstantInt::get(intTy, 1);
+
+
     Operator *op = this->op;
 
     if( oldVal->getType() == irgen->GetType(Type::intType)){
+        //post dec
         if( op->IsOp("--") ){
             //creating binary op
-            llvm::Type *intTy = irgen->GetIntType();
-            llvm::Value *one = llvm::ConstantInt::get(intTy, 1);
-            llvm::Value *inc = llvm::BinaryOperator::CreateSub(oldVal, one, "", bb);
+            llvm::Value *dec = llvm::BinaryOperator::CreateSub(oldVal, one, "", bb);
             //storing new value
-            llvm::Value* sInst = new llvm::StoreInst(location, inc, bb);
+            llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
         }
     }
 
     return oldVal;
     //llvm::Value *oldVal = new llvm::LoadInst( lhs, this->GetIdentifier()->GetName(), irgen->GetBasicBlock() );
 }
+
 
 llvm::Value* IntConstant::Emit(){
     llvm::Type *intTy = irgen->GetIntType();
