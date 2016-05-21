@@ -13,6 +13,7 @@
 #include "llvm/Support/raw_ostream.h"                                                   
 
 
+
 Program::Program(List<Decl*> *d) {
     Assert(d != NULL);
     (decls=d)->SetParentAll(this);
@@ -123,6 +124,7 @@ llvm::Value* ForStmt::Emit(){
     llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "body", f);
     llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "header", f);
   
+    //Emit Initialization
     llvm::Value *init = this->init->Emit();
 
     //creating branch inst to terminate currentBB
@@ -131,20 +133,30 @@ llvm::Value* ForStmt::Emit(){
 
     //llvm::BranchInst::Create(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond, BasicBlock *InsertAtEnd) 
     llvm::Value *test = this->test->Emit();
-    llvm::BranchInst::Create(footerBB, bodyBB, test, irgen->GetBasicBlock());
-    
-    irgen->SetBasicBlock(footerBB);
+    llvm::BranchInst::Create(footerBB, bodyBB, test, headerBB);
 
-    llvm::Value *body = this->body->Emit();
+    irgen->SetBasicBlock(bodyBB);
+   
+    /*if(irgen->GetBasicBlock()->getSingleSuccessor() == bodyBB){
+      irgen->SetBasicBlock(bodyBB);
+      llvm::Value *body = this->body->Emit();
+    }
+    else if(irgen->GetBasicBlock()->getSingleSuccessor() == footerBB){
+      llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
+      irgen->SetBasicBlock(footerBB);
+      return bodyBB->getTerminator();
+    }*/
 
-    if(bodyBB->getTerminator() == NULL){
+    if(bodyBB->getTerminator() != NULL){
+      llvm::BranchInst::Create(footerBB, bodyBB);
+      irgen->SetBasicBlock(footerBB);
       return bodyBB->getTerminator();
     }
 
-    llvm::BranchInst::Create(stepBB, irgen->GetBasicBlock());
+    llvm::BranchInst::Create(stepBB, bodyBB);
     irgen->SetBasicBlock(stepBB);
     llvm::Value *step = this->step->Emit();
-    llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
+    llvm::BranchInst::Create(headerBB, stepBB);
     irgen->SetBasicBlock(headerBB);
     return NULL;   
 }
@@ -154,6 +166,37 @@ llvm::Value* WhileStmt::Emit(){
 }
 
 llvm::Value* IfStmt::Emit(){
+     //test, body, elsebody, thenbody = body
+    //llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footer", f);
+    //llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "step", f);
+    //llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "body", f);
+    symtable->globalScope = false;
+    scope s;
+    symtable->pushScope(&s);
+    llvm::Function *f = irgen->GetFunction();
+    llvm::LLVMContext *context = irgen->GetContext();
+
+    llvm::Value* cond = test->Emit();
+    llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
+
+    llvm::BasicBlock* elseBB;
+    if( elseBody != NULL ){
+      elseBB = llvm::BasicBlock::Create(*context, "else", f);
+    }
+    
+    llvm::BasicBlock* thenBB = llvm::BasicBlock::Create(*context, "then", f);
+    llvm::BranchInst::Create(thenBB, elseBody ? elseBB:footBB, cond, irgen->GetBasicBlock());
+    thenBB->moveAfter(irgen->GetBasicBlock());
+    irgen->SetBasicBlock(thenBB);
+    body->Emit();
+    elseBB->moveAfter(thenBB);
+    llvm::BranchInst::Create(footBB, thenBB);
+    irgen->SetBasicBlock(elseBB);
+    elseBody->Emit();
+    footBB->moveAfter(elseBB);
+    llvm::BranchInst::Create(footBB, elseBB);
+    irgen->SetBasicBlock(footBB);
+    
     return NULL;
 }
 
