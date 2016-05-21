@@ -122,7 +122,7 @@ llvm::Value* ForStmt::Emit(){
     llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "step", f);
     llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "body", f);
     llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "header", f);
-
+  
     llvm::Value *init = this->init->Emit();
 
     //creating branch inst to terminate currentBB
@@ -133,7 +133,7 @@ llvm::Value* ForStmt::Emit(){
     llvm::Value *test = this->test->Emit();
     llvm::BranchInst::Create(footerBB, bodyBB, test, irgen->GetBasicBlock());
     
-    irgen->SetBasicBlock(bodyBB);
+    irgen->SetBasicBlock(footerBB);
 
     llvm::Value *body = this->body->Emit();
 
