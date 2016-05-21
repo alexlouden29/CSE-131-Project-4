@@ -14,6 +14,9 @@ llvm::Type *IRGenerator::GetType(Type* astTy) const
   } else if ( astTy == Type::floatType ) {
     ty = IRGenerator::GetFloatType();
   }
+  else if (astTy == Type::vec2Type ){
+    ty = llvm::VectorType::get(llvm::Type::getFloatTy(*context), 2);
+  }
   return ty;
 }
 

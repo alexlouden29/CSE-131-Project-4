@@ -43,6 +43,13 @@ llvm::Value* ArithmeticExpr::Emit(){
         llvm::Value *sum = llvm::BinaryOperator::CreateAdd(lhs, rhs, "", bb);
         return sum;
     }
+    else if( op->IsOp("*") ){
+        llvm::BasicBlock *bb = irgen->GetBasicBlock();
+        llvm::Value *rhs = this->right->Emit();
+        llvm::Value *lhs = this->left->Emit();
+        llvm::Value *mul = llvm::BinaryOperator::CreateMul(lhs, rhs, "", bb);
+        return mul;
+    }
     return NULL;
 }
 
@@ -115,6 +122,23 @@ llvm::Value* AssignExpr::Emit(){
     return leftLocation;
 }
 
+llvm::Value* FieldAccess::Emit(){
+    if( this->base != NULL){
+        llvm::Value* base = this->base->Emit();
+        llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(base);
+        llvm::Value *location = l->getPointerOperand();
+
+        llvm::Value *idx;
+        if(this->field->GetName() == "x"){
+            idx = llvm::ConstantInt::get(irgen->GetFloatType(), 0);
+        }
+        else{
+            idx = llvm::ConstantInt::get(irgen->GetFloatType(), 1);
+        }
+        return llvm::ExtractElementInst::Create(base, idx);
+    }
+    return NULL;
+}
 
 llvm::Value* IntConstant::Emit(){
     llvm::Type *intTy = irgen->GetIntType();
