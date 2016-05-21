@@ -120,13 +120,13 @@ llvm::Value* AssignExpr::Emit(){
     else if( op->IsOp("*=") ){
         //dealing with floats
         if( rVal->getType() == irgen->GetFloatType() ){
-            llvm::Value *mul = llvm::BinaryOperator::CreateFMul(lVal, rVal);
+            llvm::Value *mul = llvm::BinaryOperator::CreateFMul(lVal, rVal, "mulequal", irgen->GetBasicBlock());
             llvm::Value *sInst = new llvm::StoreInst(mul, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
         }
     }
     else if( op->IsOp("+=") ){
         if( rVal->getType() == irgen->GetIntType() ){
-            llvm::Value *add = llvm::BinaryOperator::CreateAdd(lVal, rVal);
+            llvm::Value *add = llvm::BinaryOperator::CreateAdd(lVal, rVal, "plusequal", irgen->GetBasicBlock());
             llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
         }
     }
