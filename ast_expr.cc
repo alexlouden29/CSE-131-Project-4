@@ -106,6 +106,12 @@ llvm::Value* AssignExpr::Emit(){
             llvm::Value *sInst = new llvm::StoreInst(mul, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
         }
     }
+    else if( op->IsOp("+=") ){
+        if( rVal->getType() == irgen->GetIntType() ){
+            llvm::Value *add = llvm::BinaryOperator::CreateAdd(lVal, rVal);
+            llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+        }
+    }
     return leftLocation;
 }
 
@@ -118,6 +124,12 @@ llvm::Value* IntConstant::Emit(){
 llvm::Value* FloatConstant::Emit(){
     llvm::Type *fTy = irgen->GetFloatType();
     return llvm::ConstantFP::get(fTy, this->value);
+}
+
+llvm::Value* BoolConstant::Emit(){
+    llvm::Type *bTy = irgen->GetBoolType();
+    //return llvm::Constant
+    return NULL;
 }
 
 llvm::Value* VarExpr::Emit(){

@@ -82,6 +82,7 @@ class BoolConstant : public Expr
     BoolConstant(yyltype loc, bool val);
     const char *GetPrintNameForNode() { return "BoolConstant"; }
     void PrintChildren(int indentLevel);
+    llvm::Value* Emit();
 };
 
 class VarExpr : public Expr
