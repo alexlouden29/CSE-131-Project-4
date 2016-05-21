@@ -131,12 +131,13 @@ llvm::Value* FieldAccess::Emit(){
         llvm::Value *idx;
         string x = "x";
         if(this->field->GetName() == x){
-            idx = llvm::ConstantInt::get(irgen->GetFloatType(), 0);
+            idx = llvm::ConstantFP::get(irgen->GetFloatType(), 0);
         }
         else{
-            idx = llvm::ConstantInt::get(irgen->GetFloatType(), 1);
+            idx = llvm::ConstantFP::get(irgen->GetFloatType(), 1);
         }
-        return llvm::ExtractElementInst::Create(base, idx);
+        llvm::Value *v = llvm::ExtractElementInst::Create(base, idx);
+        return v;
     }
     return NULL;
 }
