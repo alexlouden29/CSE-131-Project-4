@@ -65,6 +65,7 @@ class DeclStmt: public Stmt
     DeclStmt(Decl *d);
     const char *GetPrintNameForNode() { return "DeclStmt"; }
     void PrintChildren(int indentLevel);
+    Decl* GetDecl() { return decl; }
     llvm::Value* Emit();
 };
   

@@ -82,6 +82,7 @@ llvm::Value* FnDecl::Emit(){
     
     //calling emit on function body
     llvm::Value* returnExpr = this->body->Emit();
+    symtable->popScope();
     return f;
 }
 

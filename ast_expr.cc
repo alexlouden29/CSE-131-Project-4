@@ -91,8 +91,10 @@ llvm::Value* PostfixExpr::Emit(){
 }
 
 llvm::Value* AssignExpr::Emit(){
-    llvm::LoadInst* lhs = llvm::cast<llvm::LoadInst>(this->left->Emit());
     llvm::Value* val = this->right->Emit();
+    //new llvm::LoadInst (Value *Ptr, const Twine &NameStr, BasicBlock *InsertAtEnd)
+    llvm::LoadInst* lhs = llvm::cast<llvm::LoadInst>(this->left->Emit());
+    //llvm::LoadInst* lhs = new llvm::LoadInst(this->left->Emit(), "", irgen->GetBasicBlock());
     llvm::Value* sInst = new llvm::StoreInst(val, lhs->getPointerOperand(), irgen->GetBasicBlock());
     return lhs;
 }
@@ -110,6 +112,7 @@ llvm::Value* FloatConstant::Emit(){
 
 llvm::Value* VarExpr::Emit(){
     string exprName = this->GetIdentifier()->GetName();
+    cout << "DOME" << exprName << endl;
     llvm::Value* v = symtable->lookup(exprName);
     llvm::Value* lInst = new llvm::LoadInst( v, exprName, irgen->GetBasicBlock() );
     return lInst;

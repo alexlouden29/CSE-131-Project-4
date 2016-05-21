@@ -76,18 +76,19 @@ llvm::Value* ReturnStmt::Emit(){
     llvm::BasicBlock *bb = irgen->GetBasicBlock();
     llvm::LLVMContext *context = irgen->GetContext();
     llvm::Value *returnExpr = e->Emit();
-    llvm::ReturnInst::Create( *context, returnExpr, bb);
-    return NULL;
+    return llvm::ReturnInst::Create( *context, returnExpr, bb);
 }
 
 llvm::Value* StmtBlock::Emit(){
+    llvm::Value* v = NULL;
     for(int x = 0; x < decls->NumElements(); x++ ){
       VarDecl* decl = decls->Nth(x);
       decl->Emit();
     }
     for(int x = 0; x < stmts->NumElements(); x++ ){
       Stmt* stmt = stmts->Nth(x);
-      stmt->Emit();
+      v = stmt->Emit();
+      //if(v
     }
     return NULL;
 }
@@ -95,7 +96,9 @@ llvm::Value* StmtBlock::Emit(){
 
 
 llvm::Value* DeclStmt::Emit(){
-    return NULL;
+    cout << "PENIS" << endl;
+    llvm::Value* v = this->GetDecl()->Emit();
+    return v;
 
 }
 
@@ -118,18 +121,23 @@ llvm::Value* ForStmt::Emit(){
     llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "step", f);
     llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "body", f);
     llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "header", f);
-    llvm::BasicBlock *currBB = irgen->GetBasicBlock();
 
     llvm::Value *init = this->init->Emit();
 
-    //creating branch inst
-    llvm::BranchInst *branch = llvm::BranchInst::Create(headerBB, currBB);
+    //creating branch inst to terminate currentBB
+    llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
     irgen->SetBasicBlock(headerBB);
 
+    //llvm::BranchInst::Create(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond, BasicBlock *InsertAtEnd) 
     llvm::Value *test = this->test->Emit();
-
-    llvm::Value *step = this->step->Emit();
+    llvm::BranchInst::Create(footerBB, bodyBB, test, irgen->GetBasicBlock());
+    //irgen->SetBasicBlock(footerBB);
     llvm::Value *body = this->body->Emit();
+    llvm::BranchInst::Create(stepBB, irgen->GetBasicBlock());
+    //irgen->SetBasicBlock(stepBB);
+    llvm::Value *step = this->step->Emit();
+    llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
+    //irgen->SetBasicBlock(headerBB);
     return NULL;   
 }
 
