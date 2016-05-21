@@ -91,12 +91,22 @@ llvm::Value* PostfixExpr::Emit(){
 }
 
 llvm::Value* AssignExpr::Emit(){
-    llvm::Value* val = this->right->Emit();
-    //new llvm::LoadInst (Value *Ptr, const Twine &NameStr, BasicBlock *InsertAtEnd)
-    llvm::LoadInst* lhs = llvm::cast<llvm::LoadInst>(this->left->Emit());
-    //llvm::LoadInst* lhs = new llvm::LoadInst(this->left->Emit(), "", irgen->GetBasicBlock());
-    llvm::Value* sInst = new llvm::StoreInst(val, lhs->getPointerOperand(), irgen->GetBasicBlock());
-    return lhs;
+    Operator *op = this->op;
+    llvm::Value *lVal = this->left->Emit();
+    llvm::LoadInst* leftLocation = llvm::cast<llvm::LoadInst>(lVal);
+    llvm::Value *rVal = this->right->Emit();
+
+    if(op->IsOp("=")){
+        llvm::Value* sInst = new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+    }
+    else if( op->IsOp("*=") ){
+        //dealing with floats
+        if( rVal->getType() == irgen->GetFloatType() ){
+            llvm::Value *mul = llvm::BinaryOperator::CreateFMul(lVal, rVal);
+            llvm::Value *sInst = new llvm::StoreInst(mul, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+        }
+    }
+    return leftLocation;
 }
 
 
