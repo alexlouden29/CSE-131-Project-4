@@ -36,7 +36,6 @@ llvm::Value* Program::Emit() {
         decls->Nth(x)->Emit();
         
     }
-
     llvm::WriteBitcodeToFile(mod, llvm::outs());
 
     return NULL;
@@ -96,7 +95,6 @@ llvm::Value* StmtBlock::Emit(){
 
 
 llvm::Value* DeclStmt::Emit(){
-    cout << "PENIS" << endl;
     llvm::Value* v = this->GetDecl()->Emit();
     return v;
 
@@ -113,6 +111,9 @@ llvm::Value* LoopStmt::Emit(){
 }
 
 llvm::Value* ForStmt::Emit(){
+    symtable->globalScope = false;
+    scope s;
+    symtable->pushScope(&s);
     llvm::Function *f = irgen->GetFunction();
     llvm::LLVMContext *context = irgen->GetContext();
 
@@ -131,13 +132,20 @@ llvm::Value* ForStmt::Emit(){
     //llvm::BranchInst::Create(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond, BasicBlock *InsertAtEnd) 
     llvm::Value *test = this->test->Emit();
     llvm::BranchInst::Create(footerBB, bodyBB, test, irgen->GetBasicBlock());
-    //irgen->SetBasicBlock(footerBB);
+    
+    irgen->SetBasicBlock(bodyBB);
+
     llvm::Value *body = this->body->Emit();
+
+    if(bodyBB->getTerminator() == NULL){
+      return bodyBB->getTerminator();
+    }
+
     llvm::BranchInst::Create(stepBB, irgen->GetBasicBlock());
-    //irgen->SetBasicBlock(stepBB);
+    irgen->SetBasicBlock(stepBB);
     llvm::Value *step = this->step->Emit();
     llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
-    //irgen->SetBasicBlock(headerBB);
+    irgen->SetBasicBlock(headerBB);
     return NULL;   
 }
 
