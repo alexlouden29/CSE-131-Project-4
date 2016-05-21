@@ -128,8 +128,9 @@ llvm::Value* FloatConstant::Emit(){
 
 llvm::Value* BoolConstant::Emit(){
     llvm::Type *bTy = irgen->GetBoolType();
-    //return llvm::Constant
-    return NULL;
+
+    // true == 1, false == 0
+    return llvm::ConstantInt::get(bTy, this->value); 
 }
 
 llvm::Value* VarExpr::Emit(){
