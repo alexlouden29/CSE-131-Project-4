@@ -129,7 +129,8 @@ llvm::Value* FieldAccess::Emit(){
         llvm::Value *location = l->getPointerOperand();
 
         llvm::Value *idx;
-        if(this->field->GetName() == "x"){
+        string x = "x";
+        if(this->field->GetName() == x){
             idx = llvm::ConstantInt::get(irgen->GetFloatType(), 0);
         }
         else{
