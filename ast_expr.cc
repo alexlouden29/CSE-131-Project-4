@@ -112,7 +112,6 @@ llvm::Value* FloatConstant::Emit(){
 
 llvm::Value* VarExpr::Emit(){
     string exprName = this->GetIdentifier()->GetName();
-    cout << "DOME" << exprName << endl;
     llvm::Value* v = symtable->lookup(exprName);
     llvm::Value* lInst = new llvm::LoadInst( v, exprName, irgen->GetBasicBlock() );
     return lInst;
