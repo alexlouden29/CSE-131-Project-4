@@ -90,6 +90,13 @@ llvm::Value* PostfixExpr::Emit(){
     //llvm::Value *oldVal = new llvm::LoadInst( lhs, this->GetIdentifier()->GetName(), irgen->GetBasicBlock() );
 }
 
+llvm::Value* AssignExpr::Emit(){
+    llvm::LoadInst* lhs = llvm::cast<llvm::LoadInst>(this->left->Emit());
+    llvm::Value* val = this->right->Emit();
+    llvm::Value* sInst = new llvm::StoreInst(val, lhs->getPointerOperand(), irgen->GetBasicBlock());
+    return lhs;
+}
+
 
 llvm::Value* IntConstant::Emit(){
     llvm::Type *intTy = irgen->GetIntType();

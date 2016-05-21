@@ -160,6 +160,7 @@ class AssignExpr : public CompoundExpr
   public:
     AssignExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     const char *GetPrintNameForNode() { return "AssignExpr"; }
+    llvm::Value* Emit();
 };
 
 class PostfixExpr : public CompoundExpr

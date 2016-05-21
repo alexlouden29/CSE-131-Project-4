@@ -92,6 +92,8 @@ llvm::Value* StmtBlock::Emit(){
     return NULL;
 }
 
+
+
 llvm::Value* DeclStmt::Emit(){
     return NULL;
 
@@ -108,8 +110,27 @@ llvm::Value* LoopStmt::Emit(){
 }
 
 llvm::Value* ForStmt::Emit(){
-    return NULL;
+    llvm::Function *f = irgen->GetFunction();
+    llvm::LLVMContext *context = irgen->GetContext();
 
+    //creating basic blocks
+    llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footer", f);
+    llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "step", f);
+    llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "body", f);
+    llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "header", f);
+    llvm::BasicBlock *currBB = irgen->GetBasicBlock();
+
+    llvm::Value *init = this->init->Emit();
+
+    //creating branch inst
+    llvm::BranchInst *branch = llvm::BranchInst::Create(headerBB, currBB);
+    irgen->SetBasicBlock(headerBB);
+
+    llvm::Value *test = this->test->Emit();
+
+    llvm::Value *step = this->step->Emit();
+    llvm::Value *body = this->body->Emit();
+    return NULL;   
 }
 
 llvm::Value* WhileStmt::Emit(){

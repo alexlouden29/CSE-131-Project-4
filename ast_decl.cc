@@ -23,7 +23,6 @@ llvm::Value* VarDecl::Emit(){
     else{
         //local variable
         //TODO: check if vardecl is constant
-        llvm::Constant *con = llvm::Constant::getNullValue(t);
         char *c = this->GetIdentifier()->GetName();
         llvm::BasicBlock *bb = irgen->GetBasicBlock();
         llvm::Value* val = new llvm::AllocaInst(t, c, bb);
