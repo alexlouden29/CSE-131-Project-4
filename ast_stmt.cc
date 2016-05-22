@@ -88,7 +88,6 @@ llvm::Value* StmtBlock::Emit(){
     for(int x = 0; x < stmts->NumElements(); x++ ){
       Stmt* stmt = stmts->Nth(x);
       v = stmt->Emit();
-      //if(v
     }
     return NULL;
 }
@@ -212,7 +211,7 @@ llvm::Value* IfStmt::Emit(){
     llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
 
     //Create elseBB
-    llvm::BasicBlock* elseBB;
+    llvm::BasicBlock* elseBB = NULL;
     if( elseBody != NULL ){
       elseBB = llvm::BasicBlock::Create(*context, "else", f);
     }
@@ -224,13 +223,13 @@ llvm::Value* IfStmt::Emit(){
     irgen->SetBasicBlock(thenBB);
     body->Emit();
     elseBB->moveAfter(thenBB);
-    if( thenBB -> getTerminator() != NULL ){
+    if( thenBB -> getTerminator() == NULL ){
         llvm::BranchInst::Create(footBB, thenBB);
     }
     irgen->SetBasicBlock(elseBB);
     elseBody->Emit(); //check if elseBody is NULL first
     footBB->moveAfter(elseBB);
-    if( elseBB != NULL && elseBB -> getTerminator() != NULL ){
+    if( elseBB != NULL && elseBB -> getTerminator() == NULL ){
         llvm::BranchInst::Create(footBB, elseBB);
     }
     irgen->SetBasicBlock(footBB);
