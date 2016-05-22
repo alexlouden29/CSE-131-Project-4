@@ -224,11 +224,15 @@ llvm::Value* IfStmt::Emit(){
     irgen->SetBasicBlock(thenBB);
     body->Emit();
     elseBB->moveAfter(thenBB);
-    llvm::BranchInst::Create(footBB, thenBB);
+    if( thenBB -> getTerminator() != NULL ){
+        llvm::BranchInst::Create(footBB, thenBB);
+    }
     irgen->SetBasicBlock(elseBB);
-    elseBody->Emit();
+    elseBody->Emit(); //check if elseBody is NULL first
     footBB->moveAfter(elseBB);
-    llvm::BranchInst::Create(footBB, elseBB);
+    if( elseBB != NULL && elseBB -> getTerminator() != NULL ){
+        llvm::BranchInst::Create(footBB, elseBB);
+    }
     irgen->SetBasicBlock(footBB);
     
     //Pop scope
