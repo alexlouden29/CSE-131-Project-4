@@ -233,6 +233,9 @@ llvm::Value* IfStmt::Emit(){
         llvm::BranchInst::Create(footBB, elseBB);
     }
     irgen->SetBasicBlock(footBB);
+    if( footBB ->getTerminator() == NULL) {
+        llvm::UnreachableInst(*context, footBB);
+    }
     
     //Pop scope
     symtable->popScope();
