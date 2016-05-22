@@ -111,6 +111,7 @@ llvm::Value* LoopStmt::Emit(){
 
 }
 
+/*********  For Loop IRGen *********/
 llvm::Value* ForStmt::Emit(){
     //Push a scope
     symtable->globalScope = false;
@@ -156,10 +157,19 @@ llvm::Value* ForStmt::Emit(){
     return NULL;   
 }
 
+/******** While Loop IRGen **********/
 llvm::Value* WhileStmt::Emit(){
-    return NULL;
+  //Add Scope
+  symtable->globalScope = false;
+  scope s;
+  symtable->pushScope(&s);
+
+  //Pop Scope
+  symtable->popScope();
+  return NULL;
 }
 
+/********* If Statement IRGen ********/
 llvm::Value* IfStmt::Emit(){
     //Push Scope
     symtable->globalScope = false;
