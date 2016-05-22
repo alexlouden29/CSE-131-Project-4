@@ -163,6 +163,33 @@ llvm::Value* WhileStmt::Emit(){
   symtable->globalScope = false;
   scope s;
   symtable->pushScope(&s);
+  //Setup
+  llvm::Function *f = irgen->GetFunction();
+  llvm::LLVMContext *context = irgen->GetContext();
+
+  //creating basic blocks
+  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footer", f);
+  llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "body", f);
+  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "header", f);
+
+  //creating branch inst to terminate currentBB
+  llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
+  headerBB->moveAfter(irgen->GetBasicBlock());
+  irgen->SetBasicBlock(headerBB);
+
+  //Emit for loop test and create conditional loop
+  llvm::Value *test = this->test->Emit();
+     
+  llvm::BranchInst::Create(bodyBB, footerBB, test, headerBB);
+
+  //Emit body, set branch after body
+  irgen->SetBasicBlock(bodyBB);
+  body->Emit();
+  llvm::BranchInst::Create(headerBB, bodyBB);
+   
+  //Organize step and footer
+  footerBB->moveAfter(bodyBB);
+  irgen->SetBasicBlock(footerBB);
 
   //Pop Scope
   symtable->popScope();
@@ -209,8 +236,15 @@ llvm::Value* IfStmt::Emit(){
     return NULL;
 }
 
+/*Expr *e = this -> expr; 
+llvm::BasicBlock *bb = irgen->GetBasicBlock();
+llvm::LLVMContext *context = irgen->GetContext();
+llvm::Value *returnExpr = e->Emit();
+return llvm::ReturnInst::Create( *context, returnExpr, bb);*/
 llvm::Value* BreakStmt::Emit(){
-    return NULL;
+  llvm::BasicBlock *bb = irgen->GetBasicBlock();
+  llvm::LLVMContext *context = irgen->GetContext();
+  return NULL;
 }
 
 llvm::Value* ContinueStmt::Emit(){
@@ -228,9 +262,29 @@ llvm::Value* Case::Emit(){
 llvm::Value* Default::Emit(){
     return NULL;
 }
-
+//llvm::SwitchInst::Create(Value *Value, BasicBlock *Default, unsigned NumCases, BasicBlock *InsertAtEnd)
 llvm::Value* SwitchStmt::Emit(){
-    return NULL;
+  //Push Scope
+  symtable->globalScope = false;
+  scope s;
+  symtable->pushScope(&s);
+
+  //Prep
+  llvm::Function *f = irgen->GetFunction();
+  llvm::LLVMContext *context = irgen->GetContext();
+  
+  //Emit Switch Value
+  llvm::Value* exp = expr->Emit();
+
+  //Make basic blocks for cases and default
+  for(int x = 0; x < cases->NumElements(); x++){
+    llvm::BasicBlock* caseBB = llvm::BasicBlock::Create(*context, "case", f);
+    caseBB->moveAfter(irgen->GetBasicBlock());
+  }
+  
+  //Pop scope
+  symtable->popScope();
+  return NULL;
 }
 
 
