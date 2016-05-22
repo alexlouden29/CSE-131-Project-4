@@ -141,18 +141,41 @@ llvm::Value* AssignExpr::Emit(){
     if(op->IsOp("=")){
         llvm::Value* sInst = new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
     }
-    else if( op->IsOp("*=") ){
-        //dealing with floats
-        if( rVal->getType() == irgen->GetFloatType() ){
-            llvm::Value *mul = llvm::BinaryOperator::CreateFMul(lVal, rVal, "mulequal", irgen->GetBasicBlock());
-            llvm::Value *sInst = new llvm::StoreInst(mul, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-        }
+    else if( (lVal->getType() == irgen->GetType(Type::floatType)) && (rVal->getType() == irgen->GetType(Type::floatType)) ){
+      if( op->IsOp("*=") ){
+        llvm::Value *mul = llvm::BinaryOperator::CreateFMul(lVal, rVal, "mulequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(mul, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      }
+      else if( op->IsOp("+=") ){
+        llvm::Value *add = llvm::BinaryOperator::CreateFAdd(lVal, rVal, "plusequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      }
+      else if( op->IsOp("-=") ){
+        llvm::Value *add = llvm::BinaryOperator::CreateFSub(lVal, rVal, "plusequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      }
+      else if( op->IsOp("/=") ){
+        llvm::Value *add = llvm::BinaryOperator::CreateFDiv(lVal, rVal, "plusequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      }
     }
-    else if( op->IsOp("+=") ){
-        if( rVal->getType() == irgen->GetIntType() ){
-            llvm::Value *add = llvm::BinaryOperator::CreateAdd(lVal, rVal, "plusequal", irgen->GetBasicBlock());
-            llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-        }
+    else if( (lVal->getType() == irgen->GetType(Type::intType)) && (rVal->getType() == irgen->GetType(Type::intType)) ){
+      if( op->IsOp("*=") ){
+        llvm::Value *mul = llvm::BinaryOperator::CreateMul(lVal, rVal, "mulequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(mul, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      }
+      else if( op->IsOp("+=") ){
+        llvm::Value *add = llvm::BinaryOperator::CreateAdd(lVal, rVal, "plusequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      }
+      else if( op->IsOp("-=") ){
+        llvm::Value *add = llvm::BinaryOperator::CreateSub(lVal, rVal, "plusequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      }
+      else if( op->IsOp("/=") ){
+        llvm::Value *add = llvm::BinaryOperator::CreateSDiv(lVal, rVal, "plusequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      }
     }
     return leftLocation;
 }
