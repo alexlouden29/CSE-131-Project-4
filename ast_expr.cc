@@ -180,12 +180,12 @@ llvm::Value* AssignExpr::Emit(){
         llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
       }
       else if( op->IsOp("-=") ){
-        llvm::Value *add = llvm::BinaryOperator::CreateFSub(lVal, rVal, "plusequal", irgen->GetBasicBlock());
-        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+        llvm::Value *min = llvm::BinaryOperator::CreateFSub(lVal, rVal, "minusequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(min, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
       }
       else if( op->IsOp("/=") ){
-        llvm::Value *add = llvm::BinaryOperator::CreateFDiv(lVal, rVal, "plusequal", irgen->GetBasicBlock());
-        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+        llvm::Value *div = llvm::BinaryOperator::CreateFDiv(lVal, rVal, "divequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(div, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
       }
     }
     //Int assignments
@@ -199,12 +199,12 @@ llvm::Value* AssignExpr::Emit(){
         llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
       }
       else if( op->IsOp("-=") ){
-        llvm::Value *add = llvm::BinaryOperator::CreateSub(lVal, rVal, "plusequal", irgen->GetBasicBlock());
-        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+        llvm::Value *min = llvm::BinaryOperator::CreateSub(lVal, rVal, "minusequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(min, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
       }
       else if( op->IsOp("/=") ){
-        llvm::Value *add = llvm::BinaryOperator::CreateSDiv(lVal, rVal, "plusequal", irgen->GetBasicBlock());
-        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+        llvm::Value *div = llvm::BinaryOperator::CreateSDiv(lVal, rVal, "divequal", irgen->GetBasicBlock());
+        llvm::Value *sInst = new llvm::StoreInst(div, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
       }
     }
     return leftLocation;
@@ -218,13 +218,16 @@ llvm::Value* FieldAccess::Emit(){
 
         llvm::Value *idx;
         string x = "x";
+        int i;
         if(this->field->GetName() == x){
             idx = llvm::ConstantFP::get(irgen->GetFloatType(), 0);
+            idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
         }
         else{
             idx = llvm::ConstantFP::get(irgen->GetFloatType(), 1);
+            idx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
         }
-        llvm::Value *v = llvm::ExtractElementInst::Create(base, idx);
+        llvm::Value *v = llvm::ExtractElementInst::Create(base, idx, "", irgen->GetBasicBlock());
         return v;
     }
     return NULL;
