@@ -65,6 +65,18 @@ llvm::Value* RelationalExpr::Emit(){
       if( op->IsOp("<") ){
         return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OLT, lhs, rhs, "", bb);
       }
+      if( op->IsOp(">=") ){
+        return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OGE, lhs, rhs, "", bb);
+      }
+      if( op->IsOp("<=") ){
+        return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OLE, lhs, rhs, "", bb);
+      }
+      if( op->IsOp("==") ){
+        return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OEQ, lhs, rhs, "", bb);
+      }
+      if( op->IsOp("!=") ){
+        return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_ONE, lhs, rhs, "", bb);
+      }
     }
     if( (lhs->getType() == irgen->GetType(Type::intType)) && (rhs->getType() == irgen->GetType(Type::intType)) ){
       if( op->IsOp(">") ){
@@ -72,6 +84,18 @@ llvm::Value* RelationalExpr::Emit(){
       }
       if( op->IsOp("<") ){
         return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SLT, lhs, rhs, "", bb);
+      }
+      if( op->IsOp(">=") ){
+        return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SGE, lhs, rhs, "", bb);
+      }
+      if( op->IsOp("<=") ){
+        return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SLE, lhs, rhs, "", bb);
+      }
+      if( op->IsOp("==") ){
+        return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_EQ, lhs, rhs, "", bb);
+      }
+      if( op->IsOp("!=") ){
+        return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_NE, lhs, rhs, "", bb);
       }
     }
     return NULL;
