@@ -11,29 +11,34 @@
 
 
 llvm::Value* ArithmeticExpr::Emit(){
-    Operator *op = this->op;
-    //pre inc
-    if( this->left == NULL && this->right != NULL){
-        if( op->IsOp("++") ){
-            //getting the value at the pointer
-            llvm::Value *oldVal = this->right->Emit(); //"loading from pointer"
+  Operator *op = this->op;
+  //pre inc
+  if( this->left == NULL && this->right != NULL){
+      //getting the value at the pointer
+      llvm::Value *oldVal = this->right->Emit(); //"loading from pointer"
 
-            //getting the pointer of the value
-            llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(oldVal);
-            llvm::Value *location = l->getPointerOperand(); //getting pointer?
+      //getting the pointer of the value
+      llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(oldVal);
+      llvm::Value *location = l->getPointerOperand(); //getting pointer?
 
-            //getting the basic block
-            llvm::BasicBlock *bb = irgen->GetBasicBlock();
+      //getting the basic block
+      llvm::BasicBlock *bb = irgen->GetBasicBlock();
 
-            llvm::Type *intTy = irgen->GetIntType();
-            llvm::Value *one = llvm::ConstantInt::get(intTy, 1);
+      llvm::Type *intTy = irgen->GetIntType();
+      llvm::Value *one = llvm::ConstantInt::get(intTy, 1);
 
-            //adding one
-            llvm::Value *inc = llvm::BinaryOperator::CreateAdd(oldVal, one, "", bb);
-            llvm::Value* sInst = new llvm::StoreInst(inc, location, bb);
-            
-            return inc;
-        }
+      if( op->IsOp("++") ){
+        //adding one
+        llvm::Value *inc = llvm::BinaryOperator::CreateAdd(oldVal, one, "", bb);
+        llvm::Value* sInst = new llvm::StoreInst(inc, location, bb);
+        return inc;
+      }
+      if( op->IsOp("--") ){
+        //adding one
+        llvm::Value *inc = llvm::BinaryOperator::CreateSub(oldVal, one, "", bb);
+        llvm::Value* sInst = new llvm::StoreInst(inc, location, bb);
+        return inc;
+      }
     }
     if( op->IsOp("+") ){
         llvm::BasicBlock *bb = irgen->GetBasicBlock();
@@ -112,12 +117,13 @@ llvm::Value* PostfixExpr::Emit(){
     //getting the basic block
     llvm::BasicBlock *bb = irgen->GetBasicBlock();
 
+    //Get a useful '1'
     llvm::Type *intTy = irgen->GetIntType();
     llvm::Value *one = llvm::ConstantInt::get(intTy, 1);
 
 
     Operator *op = this->op;
-
+    //Int Post fix
     if( oldVal->getType() == irgen->GetType(Type::intType)){
         //post dec
         if( op->IsOp("--") ){
@@ -126,10 +132,31 @@ llvm::Value* PostfixExpr::Emit(){
             //storing new value
             llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
         }
+        if( op->IsOp("++") ){
+            //creating binary op
+            llvm::Value *dec = llvm::BinaryOperator::CreateAdd(oldVal, one, "", bb);
+            //storing new value
+            llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
+        }
     }
-
+    //Float Post fix
+    else if( oldVal->getType() == irgen->GetType(Type::floatType)){
+        //post dec
+        if( op->IsOp("--") ){
+            //creating binary op
+            llvm::Value *dec = llvm::BinaryOperator::CreateFSub(oldVal, one, "", bb);
+            //storing new value
+            llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
+        }
+        if( op->IsOp("++") ){
+            //creating binary op
+            llvm::Value *dec = llvm::BinaryOperator::CreateFAdd(oldVal, one, "", bb);
+            //storing new value
+            llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
+        }
+    }
+    //TODO: Why?
     return oldVal;
-    //llvm::Value *oldVal = new llvm::LoadInst( lhs, this->GetIdentifier()->GetName(), irgen->GetBasicBlock() );
 }
 
 llvm::Value* AssignExpr::Emit(){
@@ -138,9 +165,11 @@ llvm::Value* AssignExpr::Emit(){
     llvm::LoadInst* leftLocation = llvm::cast<llvm::LoadInst>(lVal);
     llvm::Value *rVal = this->right->Emit();
 
+    //Regular assignment
     if(op->IsOp("=")){
         llvm::Value* sInst = new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
     }
+    //Float assignments
     else if( (lVal->getType() == irgen->GetType(Type::floatType)) && (rVal->getType() == irgen->GetType(Type::floatType)) ){
       if( op->IsOp("*=") ){
         llvm::Value *mul = llvm::BinaryOperator::CreateFMul(lVal, rVal, "mulequal", irgen->GetBasicBlock());
@@ -159,6 +188,7 @@ llvm::Value* AssignExpr::Emit(){
         llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
       }
     }
+    //Int assignments
     else if( (lVal->getType() == irgen->GetType(Type::intType)) && (rVal->getType() == irgen->GetType(Type::intType)) ){
       if( op->IsOp("*=") ){
         llvm::Value *mul = llvm::BinaryOperator::CreateMul(lVal, rVal, "mulequal", irgen->GetBasicBlock());
