@@ -220,11 +220,9 @@ llvm::Value* FieldAccess::Emit(){
         string x = "x";
         int i;
         if(this->field->GetName() == x){
-            idx = llvm::ConstantFP::get(irgen->GetFloatType(), 0);
             idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
         }
         else{
-            idx = llvm::ConstantFP::get(irgen->GetFloatType(), 1);
             idx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
         }
         llvm::Value *v = llvm::ExtractElementInst::Create(base, idx, "", irgen->GetBasicBlock());
