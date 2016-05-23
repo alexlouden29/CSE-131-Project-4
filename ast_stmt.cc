@@ -40,34 +40,6 @@ llvm::Value* Program::Emit() {
     llvm::WriteBitcodeToFile(mod, llvm::outs());
 
     return NULL;
-    /*
-    IRGenerator irgen;
-    llvm::Module *mod = irgen.GetOrCreateModule("Name_the_Module.bc");
-
-    // create a function signature
-    std::vector<llvm::Type *> argTypes;
-    llvm::Type *intTy = irgen.GetIntType();
-    argTypes.push_back(intTy);
-    llvm::ArrayRef<llvm::Type *> argArray(argTypes);
-    llvm::FunctionType *funcTy = llvm::FunctionType::get(intTy, argArray, false);
-
-    // llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction("foo", intTy, intTy, (Type *)0));
-    llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction("Name_the_function", funcTy));
-    llvm::Argument *arg = f->arg_begin();
-    arg->setName("x");
-
-    // insert a block into the runction
-    llvm::LLVMContext *context = irgen.GetContext();
-    llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f);
-
-    // create a return instruction
-    llvm::Value *val = llvm::ConstantInt::get(intTy, 1);
-    llvm::Value *sum = llvm::BinaryOperator::CreateAdd(arg, val, "", bb);
-    llvm::ReturnInst::Create(*context, sum, bb);
-
-    // write the BC into standard output
-    llvm::WriteBitcodeToFile(mod, llvm::outs());
-    */
 }
 
 
@@ -223,7 +195,7 @@ llvm::Value* IfStmt::Emit(){
     irgen->SetBasicBlock(thenBB);
     body->Emit();
     elseBB->moveAfter(thenBB);
-    if( thenBB -> getTerminator() == NULL ){
+    if( thenBB->getTerminator() == NULL ){
         llvm::BranchInst::Create(footBB, thenBB);
     }
     irgen->SetBasicBlock(elseBB);
@@ -232,9 +204,13 @@ llvm::Value* IfStmt::Emit(){
     if( elseBB != NULL && elseBB -> getTerminator() == NULL ){
         llvm::BranchInst::Create(footBB, elseBB);
     }
-    irgen->SetBasicBlock(footBB);
-    if( footBB ->getTerminator() == NULL) {
-        llvm::UnreachableInst(*context, footBB);
+
+    //Mark empty footer Unreachable
+    if( pred_begin(footBB) == pred_end(footBB)) {
+      new llvm::UnreachableInst(*context, footBB);
+    }
+    else {
+      irgen->SetBasicBlock(footBB);
     }
     
     //Pop scope
