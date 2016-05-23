@@ -184,6 +184,7 @@ class Case : public SwitchLabel
     Case() : SwitchLabel() {}
     Case(Expr *label, Stmt *stmt) : SwitchLabel(label, stmt) {}
     const char *GetPrintNameForNode() { return "Case"; }
+    Expr* getLabel(){return label;}
     llvm::Value* Emit();
 
 };

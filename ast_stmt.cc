@@ -225,6 +225,7 @@ llvm::Value *returnExpr = e->Emit();
 return llvm::ReturnInst::Create( *context, returnExpr, bb);*/
 llvm::Value* BreakStmt::Emit(){
   llvm::BasicBlock *currBB = irgen->GetBasicBlock();
+  //llvm::BranchInst::Create( , irgen->GetBasicBlock());
   llvm::LLVMContext *context = irgen->GetContext();
   return NULL;
 }
@@ -273,33 +274,65 @@ llvm::Value* SwitchStmt::Emit(){
 
   //Make basic blocks for cases and default
   List<llvm::BasicBlock*>* BBList = new List<llvm::BasicBlock*>;
+  List<Stmt*>* caseList = new List<Stmt*>;
   for(int x = 0; x < cases->NumElements(); x++){
-    llvm::BasicBlock* caseBB = llvm::BasicBlock::Create(*context, "case", f);
-    BBList->Append(caseBB);
+    if( dynamic_cast<Case*>( cases->Nth(x) ) != NULL || dynamic_cast<Default*>(cases->Nth(x))){
+      llvm::BasicBlock* caseBB = llvm::BasicBlock::Create(*context, "case", f);
+      BBList->Append(caseBB);
+      caseList->Append(cases->Nth(x));
+    }
   }
   llvm::BasicBlock* defaultBB = llvm::BasicBlock::Create(*context, "case", f);
 
   //Make Switch Statement
-  llvm::SwitchInst::Create(exp, defaultBB, cases->NumElements(), irgen->GetBasicBlock());
+  llvm::SwitchInst* swInst = llvm::SwitchInst::Create(exp, defaultBB, cases->NumElements(), irgen->GetBasicBlock());
 
   //Loop through cases and emit
   for(int x = 0; x < BBList->NumElements(); x++){
     //llvm::BasicBlock* caseBB = llvm::BasicBlock::Create(*context, "case", f);
     llvm::BasicBlock* currBB = BBList->Nth(x);
-    llvm::BranchInst::Create(currBB, irgen->GetBasicBlock());
+    //llvm::BranchInst::Create(currBB, irgen->GetBasicBlock());
     currBB->moveAfter(irgen->GetBasicBlock());
     irgen->SetBasicBlock(currBB);
-    cases->Nth(x)->Emit();
+    Stmt* s = caseList->Nth(x);
+    Case* c;
+    if(dynamic_cast<Default*>(s) != NULL){
+      c = dynamic_cast<Case*>(s);
+    }
+    llvm::Value* labelVal = c->getLabel()->Emit();
+    swInst->addCase(llvm::cast<llvm::ConstantInt>(labelVal), currBB);
+    if( dynamic_cast<Default*>(caseList->Nth(x)) != NULL){
+      llvm::BranchInst::Create(defaultBB, irgen->GetBasicBlock());
+      defaultBB->moveAfter(irgen->GetBasicBlock());
+      irgen->SetBasicBlock(defaultBB);
+      //caseList->Nth(x)->Emit();
+    }
+    /*
+    Stmt* s = caseList->Nth(x);
+    Case* c = dynamic_cast<Case*>(s);
+    llvm::Value* labelVal = c->getLabel()->Emit();
+    swInst->addCase(llvm::cast<llvm::ConstantInt>(labelVal), currBB);
+    */
+    caseList->Nth(x)->Emit();
   }
-  llvm::BranchInst::Create(defaultBB, irgen->GetBasicBlock());
-  defaultBB->moveAfter(irgen->GetBasicBlock());
-  irgen->SetBasicBlock(defaultBB);
+  //llvm::BranchInst::Create(defaultBB, irgen->GetBasicBlock());
+  //defaultBB->moveAfter(irgen->GetBasicBlock());
+  //irgen->SetBasicBlock(defaultBB);
   //def->Emit();
 
   //Move on to Footer
   llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
   footBB->moveAfter(irgen->GetBasicBlock());
-  irgen->SetBasicBlock(footBB);
+  llvm::Module* mod = irgen->GetOrCreateModule("mod.bc");
+  mod->dump();
+  /*
+  if( pred_begin(footBB) == pred_end(footBB)) {
+    new llvm::UnreachableInst(*context, footBB);
+  }
+  else {
+    irgen->SetBasicBlock(footBB);
+  }
+  */
   
   //Pop scope
   symtable->popScope();
