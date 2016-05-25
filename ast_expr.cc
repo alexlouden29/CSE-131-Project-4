@@ -41,20 +41,34 @@ llvm::Value* ArithmeticExpr::Emit(){
       }
     }
     if( op->IsOp("+") ){
+      //adding float and scalar value
+      //if(){
+      //  llvm::Value *v = llvm::Constant::getNullValue(ty); //getting NULL vec2Type
+
+      //}
+      //else{
         llvm::BasicBlock *bb = irgen->GetBasicBlock();
         llvm::Value *rhs = this->right->Emit();
         llvm::Value *lhs = this->left->Emit();
 
         llvm::Value *sum = llvm::BinaryOperator::CreateAdd(lhs, rhs, "", bb);
         return sum;
+      //}
     }
     else if( op->IsOp("*") ){
+      //multiplying float and scalar value
+      //if(){
+      //  llvm::Value *v = llvm::Constant::getNullValue(ty); //getting NULL vec2Type  
+      //}
+      //else{
         llvm::BasicBlock *bb = irgen->GetBasicBlock();
         llvm::Value *rhs = this->right->Emit();
         llvm::Value *lhs = this->left->Emit();
         llvm::Value *mul = llvm::BinaryOperator::CreateMul(lhs, rhs, "", bb);
         return mul;
+      //}
     }
+    llvm::Type *ty = irgen->GetType(Type::vec2Type);
     return NULL;
 }
 
