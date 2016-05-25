@@ -1,0 +1,4 @@
+funct: test
+gin: v, vec2, 1.0, 2.0
+gin: y, float, 3.0
+

@@ -1,0 +1,21 @@
+If you have opengl development libraries installed you can verify test cases by editing minimal.frag
+
+Unlike webgl, you can use this to test while loops, switch statements, and more-complex for loops.
+
+
+
+
+How to build:
+run bash buildscript.sh   # requires freeglut and glew to be installed
+Modifying minimal.frag does not require you to rebuild.
+
+
+How to run:
+./a.out
+The output will be green if the test is correct, and red otherwise.
+
+
+
+
+This probably won't work with ieng6. It's best to run on your personal computer, but you can play with the version directive to get it working on ieng6--it just won't necessarily follow the spec.
+
