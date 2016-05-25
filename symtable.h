@@ -27,6 +27,7 @@ class SymbolTable {
   public:
     SymbolTable(); //constructor
 
+    llvm::BasicBlock* breakBlock;
 
     bool ifFlag, elseFlag, elifFlag;
     bool whileFlag, forFlag;

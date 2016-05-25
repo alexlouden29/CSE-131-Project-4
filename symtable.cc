@@ -11,6 +11,8 @@ SymbolTable::SymbolTable(){
 
   map<string, llvm::Value*> s1;
 
+  llvm::BasicBlock* breakBlock = NULL;
+
   vector<scope> scopess;
   scopes = scopess;
   scopes.push_back(s1);

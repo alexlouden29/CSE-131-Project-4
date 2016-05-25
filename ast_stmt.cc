@@ -37,7 +37,7 @@ llvm::Value* Program::Emit() {
         decls->Nth(x)->Emit();
         
     }
-    mod->dump();
+    //mod->dump();
     llvm::WriteBitcodeToFile(mod, llvm::outs());
 
     return NULL;
@@ -226,7 +226,7 @@ llvm::Value *returnExpr = e->Emit();
 return llvm::ReturnInst::Create( *context, returnExpr, bb);*/
 llvm::Value* BreakStmt::Emit(){
   llvm::BasicBlock *currBB = irgen->GetBasicBlock();
-  //llvm::BranchInst::Create( , irgen->GetBasicBlock());
+  llvm::BranchInst::Create( symtable->breakBlock , currBB );
   llvm::LLVMContext *context = irgen->GetContext();
   return NULL;
 }
@@ -274,6 +274,8 @@ llvm::Value* SwitchStmt::Emit(){
 
   //Make basic blocks for cases and default
   llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
+  symtable->breakBlock = footBB;
+
   llvm::BasicBlock* defaultBB = llvm::BasicBlock::Create(*context, "default", f);
   List<llvm::BasicBlock*>* BBList = new List<llvm::BasicBlock*>;
   List<Stmt*>* caseList = new List<Stmt*>;
@@ -294,6 +296,9 @@ llvm::Value* SwitchStmt::Emit(){
   llvm::BranchInst::Create(defaultBB, irgen->GetBasicBlock());
 
   //Loop through cases and emit
+
+  BreakStmt* brake = NULL;
+  int count = 0;
   for(int x = 0; x < BBList->NumElements(); x++){
     llvm::BasicBlock* currBB = BBList->Nth(x);
     currBB->moveAfter(irgen->GetBasicBlock());
@@ -304,18 +309,19 @@ llvm::Value* SwitchStmt::Emit(){
       c = dynamic_cast<Case*>(s);
       llvm::Value* labelVal = c->getLabel()->Emit();
       swInst->addCase(llvm::cast<llvm::ConstantInt>(labelVal), currBB);
-      c->Emit();
+      c->Emit(); 
     }
     else if( dynamic_cast<Default*>(caseList->Nth(x)) != NULL){
       defaultBB->moveAfter(irgen->GetBasicBlock());
       irgen->SetBasicBlock(defaultBB);
       caseList->Nth(x)->Emit();
     }
+    brake = dynamic_cast<BreakStmt*>(cases->Nth(count++) );
+    if( brake != NULL){
+        brake->Emit();
+        count++;
+    }
   }
-  //llvm::BranchInst::Create(defaultBB, irgen->GetBasicBlock());
-  //defaultBB->moveAfter(irgen->GetBasicBlock());
-  //irgen->SetBasicBlock(defaultBB);
-  //def->Emit();
 
   //Move on to Footer
   footBB->moveAfter(irgen->GetBasicBlock());
