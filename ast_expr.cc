@@ -76,17 +76,28 @@ llvm::Value* ArithmeticExpr::Emit(){
       if( vec != NULL ) {
         
         llvm::Type *ty = irgen->GetType(Type::vec2Type);
-        llvm::Value *v = llvm::Constant::getNullValue(ty); //getting NULL vec2Type  
+        llvm::Value *v = llvm::Constant::getNullValue(ty); //getting empty vec2Type  
+        //loading vector and making it a vector type
         llvm::LoadInst* lInst = llvm::cast<llvm::LoadInst>(vec);
         llvm::VectorType* vector = llvm::cast<llvm::VectorType>(lInst);
         
+        //looping through elements in vector
         for(int i = 0; i < vector->getNumElements(); i++){
           llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
+
+          //getting the element at index
           llvm::Value* elem = llvm::ExtractElementInst::Create(vec, num);
+
+          //multiplying element with constFP
           llvm::Value* mult = llvm::BinaryOperator::CreateFMul(elem, constFP);
+
+          //inserting element into the empty vector
           llvm::InsertElementInst::Create(v, mult, num, "", irgen->GetBasicBlock());
         }
+      
         llvm::Value* ptr = lInst->getPointerOperand();
+
+        //storing new vector to where the old vector was I think
         llvm::Value* sInst = new llvm::StoreInst(v, ptr, irgen->GetBasicBlock());
         return v;
 /*
