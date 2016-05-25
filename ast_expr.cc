@@ -44,7 +44,7 @@ llvm::Value* ArithmeticExpr::Emit(){
       //adding float and scalar value
       //if(){
       //  llvm::Value *v = llvm::Constant::getNullValue(ty); //getting NULL vec2Type
-
+      //
       //}
       //else{
         llvm::BasicBlock *bb = irgen->GetBasicBlock();
@@ -57,19 +57,56 @@ llvm::Value* ArithmeticExpr::Emit(){
     }
     else if( op->IsOp("*") ){
       //multiplying float and scalar value
-      //if(){
-      //  llvm::Value *v = llvm::Constant::getNullValue(ty); //getting NULL vec2Type  
-      //}
-      //else{
+      llvm::Value *lhs = this->left->Emit();
+      llvm::Value *rhs = this->right->Emit();
+      llvm::Value* vec;
+      llvm::Value* constFP;
+      if(lhs->getType() == irgen->GetType(Type::vec2Type)){
+        vec = lhs;
+        constFP = rhs;
+      }
+      else if(rhs->getType() == irgen->GetType(Type::vec2Type)){
+        vec = rhs;
+        constFP = lhs;
+      }
+      else{
+        vec = NULL;
+        constFP = NULL;
+      }
+      if( vec != NULL ) {
+        
+        llvm::Type *ty = irgen->GetType(Type::vec2Type);
+        llvm::Value *v = llvm::Constant::getNullValue(ty); //getting NULL vec2Type  
+        llvm::LoadInst* lInst = llvm::cast<llvm::LoadInst>(vec);
+        llvm::VectorType* vector = llvm::cast<llvm::VectorType>(lInst);
+        
+        for(int i = 0; i < vector->getNumElements(); i++){
+          llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
+          llvm::Value* elem = llvm::ExtractElementInst::Create(vec, num);
+          llvm::Value* mult = llvm::BinaryOperator::CreateFMul(elem, constFP);
+          llvm::InsertElementInst::Create(v, mult, num, "", irgen->GetBasicBlock());
+        }
+        llvm::Value* ptr = lInst->getPointerOperand();
+        llvm::Value* sInst = new llvm::StoreInst(v, ptr, irgen->GetBasicBlock());
+        return v;
+/*
+        for(int i = 0; i < vector->getNumElements(); i++){
+          llvm::Value *index = llvm::ConstantInt::get(irgen->GetIntType(), i);
+          llvm::InsertElementInst::Create(v, constFP, index, "", irgen->GetBasicBlock());
+        }
+        llvm::Value * mult = llvm::BinaryOperator::CreateMul(v, vec);
+        llvm::Value* sInst = new llvm::StoreInst(v, vec, irgen->GetBasicBlock());
+*/
+      }
+      else{
         llvm::BasicBlock *bb = irgen->GetBasicBlock();
         llvm::Value *rhs = this->right->Emit();
         llvm::Value *lhs = this->left->Emit();
         llvm::Value *mul = llvm::BinaryOperator::CreateMul(lhs, rhs, "", bb);
         return mul;
-      //}
+      }
     }
-    llvm::Type *ty = irgen->GetType(Type::vec2Type);
-    return NULL;
+        return NULL;
 }
 
 llvm::Value* RelationalExpr::Emit(){

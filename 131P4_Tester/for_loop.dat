@@ -1,3 +1,0 @@
-funct: fortest
-gin: a, int, 10
-gin: v, float, 1.0
