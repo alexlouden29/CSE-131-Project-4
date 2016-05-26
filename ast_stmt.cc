@@ -235,6 +235,7 @@ llvm::Value* ContinueStmt::Emit(){
     return NULL;
 }
 
+//Unecessary I think
 llvm::Value* SwitchLabel::Emit(){
     return NULL;
 }

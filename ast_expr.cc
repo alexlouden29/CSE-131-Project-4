@@ -70,6 +70,7 @@ llvm::Value* ArithmeticExpr::Emit(){
         constFP = lhs;
       }
       else{
+        //cout << "BOOGERS" << endl;
         vec = NULL;
         constFP = NULL;
       }
@@ -272,6 +273,14 @@ llvm::Value* AssignExpr::Emit(){
     return leftLocation;
 }
 
+//Array Access
+llvm::Value* ArrayAccess::Emit(){
+  //llvm::GetElementPtrInst::Create(Value *Ptr, ArrayRef<Value*> IdxList, const Twine &NameStr, BasicBlock *InsertAtEnd);
+  llvm::GetElementPtrInst::Create(
+  return NULL;
+}
+
+//Field Acess for Functions
 llvm::Value* FieldAccess::Emit(){
     if( this->base != NULL){
         llvm::Value* base = this->base->Emit();
