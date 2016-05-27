@@ -276,7 +276,7 @@ llvm::Value* AssignExpr::Emit(){
 //Array Access
 llvm::Value* ArrayAccess::Emit(){
   //llvm::GetElementPtrInst::Create(Value *Ptr, ArrayRef<Value*> IdxList, const Twine &NameStr, BasicBlock *InsertAtEnd);
-  llvm::GetElementPtrInst::Create(
+  //llvm::GetElementPtrInst::Create(
   return NULL;
 }
 
