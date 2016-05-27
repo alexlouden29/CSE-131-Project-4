@@ -61,31 +61,34 @@ llvm::Value* ArithmeticExpr::Emit(){
       llvm::Value *lhs = this->left->Emit();
       llvm::Value *rhs = this->right->Emit();
       llvm::Value* vec = NULL;
-      llvm::Constant* constFP = NULL;
+      llvm::Value* constFP = NULL;
 
       if(lhs->getType() == irgen->GetType(Type::vec2Type)){
         vec = lhs;
-        constFP = dynamic_cast<llvm::Constant*>(rhs);
+        //constFP = dynamic_cast<llvm::Constant*>(rhs);
+        constFP = rhs;
       }
       else if(rhs->getType() == irgen->GetType(Type::vec2Type)){
         vec = rhs;
-        constFP = dynamic_cast<llvm::Constant*>(lhs);
+        //constFP = dynamic_cast<llvm::Constant*>(lhs);
+        constFP = lhs;
       }
       llvm::Type *ty = irgen->GetType(Type::vec2Type);
       llvm::Value *emptyVec = llvm::UndefValue::get(ty); //getting empty vec2Type 
 
       //loading vector and making it a vector type
-      llvm::LoadInst *loadInst = new llvm::LoadInst(vec, "", irgen->GetBasicBlock());
-      llvm::VectorType* vector = llvm::cast<llvm::VectorType>(loadInst);
+      //llvm::LoadInst *loadInst = new llvm::LoadInst(vec, "", irgen->GetBasicBlock());
+      llvm::VectorType* vector = dynamic_cast<llvm::VectorType*>(vec);
 
       //looping through elements in vector
-      for(int i = 0; i < vector->getNumElements(); i++){
+      //for(int i = 0; i < vector->getNumElements(); i++){
+      for(int i = 0; i < 2; i++){
         llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
 
         //inserting element into the empty vector
         emptyVec = llvm::InsertElementInst::Create(emptyVec, constFP, num, "emptyVec", irgen->GetBasicBlock());
       }
-      llvm::Value* load = loadInst;
+      llvm::Value* load = vec;
       llvm::Value* mult = llvm::BinaryOperator::CreateFMul(emptyVec, load, "mult", irgen->GetBasicBlock());
       return mult;
     }
