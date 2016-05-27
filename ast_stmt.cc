@@ -202,10 +202,7 @@ llvm::Value* IfStmt::Emit(){
     llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
 
     //Create elseBB
-    llvm::BasicBlock* elseBB = NULL;
-    if( elseBody != NULL ){
-      elseBB = llvm::BasicBlock::Create(*context, "else", f);
-    }
+    llvm::BasicBlock* elseBB = llvm::BasicBlock::Create(*context, "else", f);
     
     //Organize the shit show of branchs and blocks
     llvm::BasicBlock* thenBB = llvm::BasicBlock::Create(*context, "then", f);
@@ -214,18 +211,24 @@ llvm::Value* IfStmt::Emit(){
     irgen->SetBasicBlock(thenBB);
     body->Emit();
     elseBB->moveAfter(thenBB);
+
     //Create then terminator if none present
     if( thenBB->getTerminator() == NULL ){
         llvm::BranchInst::Create(footBB, thenBB);
     }
-    irgen->SetBasicBlock(elseBB);
-    //TODO Check if else body is null
-    elseBody->Emit(); 
+     
+    /*if( elseBody != NULL ){
+      irgen->SetBasicBlock(elseBB);
+      elseBody->Emit(); 
+    }*/
     footBB->moveAfter(elseBB);
 
     //check if elseBody is not yet terminated
-    if( elseBB != NULL && elseBB -> getTerminator() == NULL ){
-        llvm::BranchInst::Create(footBB, elseBB);
+    if( elseBody != NULL && elseBB -> getTerminator() == NULL ){
+      llvm::BranchInst::Create(footBB, elseBB);
+    }
+    else if( pred_begin(elseBB) == pred_end(elseBB) ){
+      new llvm::UnreachableInst(*context, elseBB);
     }
 
     //Mark empty footer Unreachable
