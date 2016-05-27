@@ -72,7 +72,7 @@ llvm::Value* ArithmeticExpr::Emit(){
         constFP = dynamic_cast<llvm::Constant*>(lhs);
       }
       llvm::Type *ty = irgen->GetType(Type::vec2Type);
-      llvm::Value *v = llvm::Constant::getNullValue(ty); //getting empty vec2Type 
+      llvm::Value *emptyVec = llvm::UndefValue::get(ty); //getting empty vec2Type 
 
       //loading vector and making it a vector type
       llvm::LoadInst *loadInst = new llvm::LoadInst(vec, "", irgen->GetBasicBlock());
@@ -83,10 +83,12 @@ llvm::Value* ArithmeticExpr::Emit(){
         llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
 
         //inserting element into the empty vector
-        v = llvm::InsertElementInst::Create(v, constFP, num, "", irgen->GetBasicBlock());
+        emptyVec = llvm::InsertElementInst::Create(emptyVec, constFP, num, "emptyVec", irgen->GetBasicBlock());
       }
       llvm::Value* load = loadInst;
-      return llvm::BinaryOperator::CreateFMul(v, load, "", irgen->GetBasicBlock());
+      llvm::Value* mult = llvm::BinaryOperator::CreateFMul(emptyVec, load, "mult", irgen->GetBasicBlock());
+      llvm::Value* ptr = loadInst->getPointerOperand();
+      return new llvm::StoreInst(emptyVec, ptr, "storeInst", irgen->GetBasicBlock());
     }
     return NULL;
 }
