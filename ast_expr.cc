@@ -12,21 +12,29 @@
 
 llvm::Value* ArithmeticExpr::Emit(){
   Operator *op = this->op;
+
   //pre inc
   if( this->left == NULL && this->right != NULL){
       //getting the value at the pointer
-      llvm::Value *oldVal = this->right->Emit(); //"loading from pointer"
+      llvm::Value *oldVal = this->right->Emit();
 
       //getting the pointer of the value
-      //llvm::LoadInst *loadInst = new llvm::LoadInst(oldVal, "", bb);
       llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(oldVal);
-      llvm::Value *location = l->getPointerOperand(); //getting pointer?
+      llvm::Value *location = l->getPointerOperand();
 
       //getting the basic block
       llvm::BasicBlock *bb = irgen->GetBasicBlock();
 
-      llvm::Type *intTy = irgen->GetIntType();
-      llvm::Value *one = llvm::ConstantInt::get(intTy, 1);
+      llvm::Type *type = NULL;
+      llvm::Value *one = NULL;
+      if( oldVal->getType() == irgen->GetType(Type::intType) ){
+        type = irgen->GetIntType();
+        one = llvm::ConstantInt::get(type,1);
+      }
+      else if( oldVal->getType() == irgen->GetType(Type::floatType) ){
+        type = irgen->GetFloatType();
+        one = llvm::ConstantFP::get(type,1);
+      }
 
       if( op->IsOp("++") ){
         //adding one
@@ -35,68 +43,134 @@ llvm::Value* ArithmeticExpr::Emit(){
         return inc;
       }
       if( op->IsOp("--") ){
-        //adding one
-        llvm::Value *inc = llvm::BinaryOperator::CreateSub(oldVal, one, "", bb);
-        llvm::Value* sInst = new llvm::StoreInst(inc, location, bb);
-        return inc;
+        //subtracting one
+        llvm::Value *dec = llvm::BinaryOperator::CreateSub(oldVal, one, "", bb);
+        llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
+        return dec;
       }
-    }
-    if( op->IsOp("+") ){
-      //adding float and scalar value
-      //if(){
-      //  llvm::Value *v = llvm::Constant::getNullValue(ty); //getting NULL vec2Type
-      //
-      //}
-      //else{
-        llvm::BasicBlock *bb = irgen->GetBasicBlock();
-        llvm::Value *rhs = this->right->Emit();
-        llvm::Value *lhs = this->left->Emit();
+  }
 
-        llvm::Value *sum = llvm::BinaryOperator::CreateAdd(lhs, rhs, "", bb);
-        return sum;
-      //}
+  llvm::Value *lhs = this->left->Emit();
+  llvm::Value *rhs = this->right->Emit();
+  llvm::BasicBlock *bb = irgen->GetBasicBlock();
+
+  //dealing with arithmetic between floats and 
+  if( lhs->getType() == irgen->GetType(Type::floatType) &&
+      rhs->getType() == irgen->GetType(Type::floatType) ){
+    if( op->IsOp("+") ){
+      return llvm::BinaryOperator::CreateFAdd(lhs, rhs, "", bb);
+    }
+    else if( op->IsOp("-") ){
+      return llvm::BinaryOperator::CreateFSub(lhs, rhs, "", bb);
     }
     else if( op->IsOp("*") ){
-      //multiplying float and scalar value
-      llvm::Value *lhs = this->left->Emit();
-      llvm::Value *rhs = this->right->Emit();
-      llvm::Value* vec = NULL;
-      llvm::Value* constFP = NULL;
-      int vecNum = 0;
-      
-
-      if(lhs->getType() == irgen->GetType(Type::vec2Type)){
-        vecNum = 2;
-        vec = lhs;
-        //constFP = dynamic_cast<llvm::Constant*>(rhs);
-        constFP = rhs;
-      }
-      else if(rhs->getType() == irgen->GetType(Type::vec2Type)){
-        vecNum = 2;
-        vec = rhs;
-        //constFP = dynamic_cast<llvm::Constant*>(lhs);
-        constFP = lhs;
-      }
-      llvm::Type *ty = irgen->GetType(Type::vec2Type);
-      llvm::Value *emptyVec = llvm::UndefValue::get(ty); //getting empty vec2Type 
-
-      //loading vector and making it a vector type
-      //llvm::LoadInst *loadInst = new llvm::LoadInst(vec, "", irgen->GetBasicBlock());
-      llvm::VectorType* vector = dynamic_cast<llvm::VectorType*>(vec);
-
-      //looping through elements in vector
-      //for(int i = 0; i < vector->getNumElements(); i++){
-      for(int i = 0; i < vecNum; i++){
-        llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
-
-        //inserting element into the empty vector
-        emptyVec = llvm::InsertElementInst::Create(emptyVec, constFP, num, "emptyVec", irgen->GetBasicBlock());
-      }
-      llvm::Value* load = vec;
-      llvm::Value* mult = llvm::BinaryOperator::CreateFMul(emptyVec, load, "mult", irgen->GetBasicBlock());
-      return mult;
+      return llvm::BinaryOperator::CreateFMul(lhs, rhs, "", bb);
     }
-    return NULL;
+    else if( op->IsOp("/") ){
+      return llvm::BinaryOperator::CreateFDiv(lhs, rhs, "", bb);
+    }
+    else{
+      return NULL;
+    }      
+  }
+  //dealing with ints only
+  else if( lhs->getType() == irgen->GetType(Type::intType) && 
+           rhs->getType() == irgen->GetType(Type::intType) ){
+    if( op->IsOp("+") ){
+      return llvm::BinaryOperator::CreateAdd(lhs, rhs, "", bb);
+    }
+    else if( op->IsOp("-") ){
+      return llvm::BinaryOperator::CreateSub(lhs, rhs, "", bb);
+    }
+    else if( op->IsOp("*") ){
+      return llvm::BinaryOperator::CreateMul(lhs, rhs, "", bb);
+    }
+    else if( op->IsOp("/") ){
+      return llvm::BinaryOperator::CreateSDiv(lhs, rhs, "", bb);
+    }
+    else{
+      return NULL;
+    }
+  }
+  
+  //arithmetic between vector and scalar
+  else if( (lhs->getType() == irgen->GetType(Type::floatType)) ||
+           (rhs->getType() == irgen->GetType(Type::floatType)) ){
+    llvm::Value* vec = NULL;
+    llvm::Value* constFP = NULL;
+    llvm::Type* ty = NULL;
+    int vecNum = 0;
+
+    if(lhs->getType() == irgen->GetType(Type::vec2Type)){
+      vecNum = 2;
+      vec = lhs;
+      constFP = rhs;
+      ty = irgen->GetType(Type::vec2Type);
+    }
+    else if(rhs->getType() == irgen->GetType(Type::vec2Type)){
+      vecNum = 2;
+      vec = rhs;
+      constFP = lhs;
+      ty = irgen->GetType(Type::vec2Type);
+    }
+    else if(lhs->getType() == irgen->GetType(Type::vec3Type)){
+      vecNum = 3;
+      vec = lhs;
+      constFP = rhs;
+      ty = irgen->GetType(Type::vec3Type);
+    }
+    else if(rhs->getType() == irgen->GetType(Type::vec3Type)){
+      vecNum = 3;
+      vec = rhs;
+      constFP = lhs;
+      ty = irgen->GetType(Type::vec3Type);
+    }
+    else if(lhs->getType() == irgen->GetType(Type::vec4Type)){
+      vecNum = 4;
+      vec = lhs;
+      constFP = rhs;
+      ty = irgen->GetType(Type::vec4Type);
+    }
+    else if(rhs->getType() == irgen->GetType(Type::vec4Type)){
+      vecNum = 4;
+      vec = rhs;
+      constFP = lhs;
+      ty = irgen->GetType(Type::vec4Type);
+    }
+    llvm::Value *emptyVec = llvm::Constant::getNullValue(ty); //getting empty vec2Type 
+
+    //loading vector and making it a vector type
+    llvm::VectorType* vector = dynamic_cast<llvm::VectorType*>(vec);
+
+    //looping through elements in vector
+    for(int i = 0; i < vecNum; i++){
+      llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
+      //inserting element into the empty vector
+      emptyVec = llvm::InsertElementInst::Create(emptyVec, constFP, num, "emptyVec", irgen->GetBasicBlock());
+    }
+    llvm::Value* load = vec;
+
+    //adding between vector and scalar
+    if( op->IsOp("+") ){
+      return llvm::BinaryOperator::CreateFAdd(emptyVec, load, "", bb);
+    }
+    //subtracting between vector and scalar
+    else if( op->IsOp("-") ){
+      return llvm::BinaryOperator::CreateFSub(emptyVec, load, "", bb);
+    }
+    //multiplying between vector and scalar
+    else if( op->IsOp("*") ){
+      return llvm::BinaryOperator::CreateFMul(emptyVec, load, "", bb);
+    }
+    //dividing between vector and scalar
+    else if( op->IsOp("/") ){
+      return llvm::BinaryOperator::CreateFDiv(emptyVec, load, "", bb);
+    }
+    else{
+      return NULL;
+    }
+  }
+  return NULL;
 }
 
 llvm::Value* RelationalExpr::Emit(){
@@ -267,19 +341,30 @@ llvm::Value* ArrayAccess::Emit(){
 llvm::Value* FieldAccess::Emit(){
   if( this->base != NULL){
     llvm::Value* base = this->base->Emit();
-    llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(base);
-    llvm::Value *location = l->getPointerOperand();
+    llvm::BasicBlock* bb = irgen->GetBasicBlock();
+    //llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(base);
+    //llvm::Value *location = l->getPointerOperand();
 
-    llvm::Value *idx;
-    string x = "x";
-    int i;
+    llvm::Value *idx = NULL;
+    string x = "x", y = "y", z = "z", w = "w";
+    //for
     if(this->field->GetName() == x){
       idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
     }
-    else{
+    else if(this->field->GetName() == y){
       idx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
     }
-    llvm::Value *v = llvm::ExtractElementInst::Create(base, idx, "", irgen->GetBasicBlock());
+    else if(this->field->GetName() == z){
+      idx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+    }
+    else if(this->field->GetName() == w){
+      idx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+    }
+    //if (idx == NULL){
+    //  cout << "fnjdls" << endl;
+    //}
+    
+    llvm::Value *v = llvm::ExtractElementInst::Create(base, idx, "", bb);
     return v;
   }
   return NULL;
