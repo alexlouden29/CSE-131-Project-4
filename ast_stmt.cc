@@ -344,6 +344,7 @@ llvm::Value* SwitchStmt::Emit(){
       c->Emit(); 
       //Ridiculous loop to catch all of the statements in a case
       for(int y = x; y < cases->NumElements(); y++){
+        //Catch all of the cases's statements
         if(y+1 < cases->NumElements()){
           if(dynamic_cast<Case*>(cases->Nth(y+1)) == NULL &&
              dynamic_cast<Default*>(cases->Nth(y+1)) == NULL){
@@ -371,6 +372,7 @@ llvm::Value* SwitchStmt::Emit(){
 
       //Ridiculous loop to catch all of the statements in a case
       for(int y = x; y < cases->NumElements(); y++){
+        //Catch all of the cases's statements
         if(y+1 < cases->NumElements()){
           if(dynamic_cast<Case*>(cases->Nth(y+1)) == NULL &&
              dynamic_cast<Default*>(cases->Nth(y+1)) == NULL){
@@ -391,11 +393,12 @@ llvm::Value* SwitchStmt::Emit(){
     }
   }
 
-  if( succ_begin(defaultBB) == succ_end(defaultBB) ){
-    llvm::BranchInst::Create(footBB, defaultBB);
-  }
+  //Deal with possible default issues, like non-existant/no terminator
   if( pred_begin(defaultBB) == pred_end(defaultBB) ){
-    llvm::UnreachableInst(*context, defaultBB);
+    new llvm::UnreachableInst(*context, defaultBB);
+  }
+  else if( succ_begin(defaultBB) == succ_end(defaultBB) ){
+    llvm::BranchInst::Create(footBB, defaultBB);
   }
   
   //Check if footer is Unreachable
