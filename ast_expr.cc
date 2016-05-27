@@ -87,8 +87,7 @@ llvm::Value* ArithmeticExpr::Emit(){
       }
       llvm::Value* load = loadInst;
       llvm::Value* mult = llvm::BinaryOperator::CreateFMul(emptyVec, load, "mult", irgen->GetBasicBlock());
-      llvm::Value* ptr = loadInst->getPointerOperand();
-      return new llvm::StoreInst(emptyVec, ptr, "storeInst", irgen->GetBasicBlock());
+      return mult;
     }
     return NULL;
 }
@@ -209,7 +208,8 @@ llvm::Value* AssignExpr::Emit(){
         llvm::Value* sInst = new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
     }
     //Float assignments
-    else if( (lVal->getType() == irgen->GetType(Type::floatType)) && (rVal->getType() == irgen->GetType(Type::floatType)) ){
+    else if( ((lVal->getType() == irgen->GetType(Type::floatType)) && (rVal->getType() == irgen->GetType(Type::floatType))) /*||
+      ((lVal->getType() == irgen->GetType(Type::vec2Type)) && (rVal->getType() == irgen->GetType(Type::vec2Type)))*/ ){
       if( op->IsOp("*=") ){
         llvm::Value *mul = llvm::BinaryOperator::CreateFMul(lVal, rVal, "mulequal", irgen->GetBasicBlock());
         llvm::Value *sInst = new llvm::StoreInst(mul, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
