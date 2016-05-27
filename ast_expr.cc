@@ -425,9 +425,13 @@ llvm::Value* FieldAccess::Emit(){
           idx = llvm::ConstantInt::get(irgen->GetIntType(), 100);
         swizzles.push_back(idx);
       }
+      if(strlen(f) < 2){
+        return llvm::ExtractElementInst::Create(base, idx, "", bb);
+      }
       llvm::ArrayRef<llvm::Constant*> swizzleArrayRef(swizzles);
       llvm::Constant* mask = llvm::ConstantVector::get(swizzleArrayRef);
       llvm::Value* newVec = new llvm::ShuffleVectorInst(base, base, mask, "", bb);
+      
       return newVec;
     }
   }
