@@ -28,6 +28,7 @@ class SymbolTable {
     SymbolTable(); //constructor
 
     llvm::BasicBlock* breakBlock;
+    llvm::BasicBlock* continueBlock;
 
     bool ifFlag, elseFlag, elifFlag;
     bool whileFlag, forFlag;

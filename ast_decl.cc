@@ -25,6 +25,7 @@ llvm::Value* VarDecl::Emit(){
         //TODO: check if vardecl is constant
         char *c = this->GetIdentifier()->GetName();
         llvm::BasicBlock *bb = irgen->GetBasicBlock();
+        //mod->dump();
         llvm::Value* val = new llvm::AllocaInst(t, c, bb);
         symtable->addSymbol(this->GetIdentifier()->GetName(), val); 
         return val;

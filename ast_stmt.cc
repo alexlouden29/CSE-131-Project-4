@@ -37,7 +37,7 @@ llvm::Value* Program::Emit() {
         
     }
     //Write to bc file
-    //mod->dump();
+    mod->dump();
     llvm::WriteBitcodeToFile(mod, llvm::outs());
 
     return NULL;
@@ -119,8 +119,10 @@ llvm::Value* ForStmt::Emit(){
     //Emit body, set branch after body
     irgen->SetBasicBlock(bodyBB);
 
-    //if there's a break in the for loop
+    //if there's a break or while in the for loop
     symtable->breakBlock = footerBB;
+    symtable->continueBlock = stepBB; //either stepBB or headerBB
+
     body->Emit();
     llvm::BranchInst::Create(stepBB, bodyBB);
    
@@ -172,8 +174,9 @@ llvm::Value* WhileStmt::Emit(){
   //Emit body, set branch after body
   irgen->SetBasicBlock(bodyBB);
 
-  //if there's a break in the while loop
+  //if there's a break or continue in the while loop
   symtable->breakBlock = footerBB;
+  symtable->continueBlock = headerBB;
 
   body->Emit();
   llvm::BranchInst::Create(headerBB, bodyBB);
@@ -253,13 +256,15 @@ llvm::Value* IfStmt::Emit(){
 
 /****** Break Statement *******/
 llvm::Value* BreakStmt::Emit(){
-  irgen->GetOrCreateModule("mod.bc")->dump();
   llvm::BasicBlock *currBB = irgen->GetBasicBlock();
   llvm::BranchInst::Create( symtable->breakBlock , currBB );
   return NULL;
 }
 
 llvm::Value* ContinueStmt::Emit(){
+    irgen->GetOrCreateModule("mod.bc")->dump();
+    llvm::BasicBlock *currBB = irgen->GetBasicBlock();
+    llvm::BranchInst::Create( symtable->continueBlock, currBB );
     return NULL;
 }
 
