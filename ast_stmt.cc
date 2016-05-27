@@ -25,25 +25,25 @@ void Program::PrintChildren(int indentLevel) {
 }
 
 llvm::Value* Program::Emit() {
-    // TODO:
-    // This is just a reference for you to get started
-    //
-    // You can use this as a template and create Emit() function
-    // for individual node to fill in the module structure and instructions.
-    //
+    //Set global scope for first chunk
     symtable->globalScope = true;
+
+    //Create Module
     llvm::Module *mod = irgen->GetOrCreateModule("mod.bc");
+
+    //Emit all declarations
     for(int x = 0; x < decls->NumElements(); x++){
         decls->Nth(x)->Emit();
         
     }
-    //mod->dump();
+    //Write to bc file
+    mod->dump();
     llvm::WriteBitcodeToFile(mod, llvm::outs());
 
     return NULL;
 }
 
-
+/*******  Return Statement Emit *******/
 llvm::Value* ReturnStmt::Emit(){
     Expr *e = this -> expr; 
     llvm::BasicBlock *bb = irgen->GetBasicBlock();
@@ -52,6 +52,7 @@ llvm::Value* ReturnStmt::Emit(){
     return llvm::ReturnInst::Create( *context, returnExpr, bb);
 }
 
+/*******  Stamtement Block Emit *******/
 llvm::Value* StmtBlock::Emit(){
     llvm::Value* v = NULL;
     for(int x = 0; x < decls->NumElements(); x++ ){
@@ -65,19 +66,20 @@ llvm::Value* StmtBlock::Emit(){
     return NULL;
 }
 
-
-
+/*****  Decl Statement *****/
 llvm::Value* DeclStmt::Emit(){
-    llvm::Value* v = this->GetDecl()->Emit();
+    VarDecl* varD = (VarDecl*)this->GetDecl();
+    llvm::Value* v = varD->Emit();
+    new llvm::StoreInst (varD->GetAssignTo()->Emit(), v, irgen->GetBasicBlock());
     return v;
 
 }
 
 llvm::Value* ConditionalStmt::Emit(){
     return NULL;
-
 }
 
+//Unecessary?
 llvm::Value* LoopStmt::Emit(){
     return NULL;
 
@@ -89,6 +91,8 @@ llvm::Value* ForStmt::Emit(){
     symtable->globalScope = false;
     scope s;
     symtable->pushScope(&s);
+   
+    //llvm Setup
     llvm::Function *f = irgen->GetFunction();
     llvm::LLVMContext *context = irgen->GetContext();
 
@@ -108,7 +112,6 @@ llvm::Value* ForStmt::Emit(){
 
     //Emit for loop test and create conditional loop
     llvm::Value *test = this->test->Emit();
-     
     llvm::BranchInst::Create(bodyBB, footerBB, test, headerBB);
 
     //Emit body, set branch after body
@@ -122,7 +125,14 @@ llvm::Value* ForStmt::Emit(){
     step->Emit();
     llvm::BranchInst::Create(headerBB, stepBB);
     footerBB->moveAfter(stepBB);
-    irgen->SetBasicBlock(footerBB);
+    
+    //Check if footer is empty
+    if( pred_begin(footerBB) == pred_end(footerBB)) {
+      new llvm::UnreachableInst(*context, footerBB);
+    }
+    else {
+      irgen->SetBasicBlock(footerBB);
+    }
 
     //Pop scope
     symtable->popScope();
@@ -135,7 +145,8 @@ llvm::Value* WhileStmt::Emit(){
   symtable->globalScope = false;
   scope s;
   symtable->pushScope(&s);
-  //Setup
+
+  //llvm Setup
   llvm::Function *f = irgen->GetFunction();
   llvm::LLVMContext *context = irgen->GetContext();
 
@@ -151,7 +162,6 @@ llvm::Value* WhileStmt::Emit(){
 
   //Emit for loop test and create conditional loop
   llvm::Value *test = this->test->Emit();
-     
   llvm::BranchInst::Create(bodyBB, footerBB, test, headerBB);
 
   //Emit body, set branch after body
@@ -159,9 +169,14 @@ llvm::Value* WhileStmt::Emit(){
   body->Emit();
   llvm::BranchInst::Create(headerBB, bodyBB);
    
-  //Organize step and footer
+  //Move footer and check if empty
   footerBB->moveAfter(bodyBB);
-  irgen->SetBasicBlock(footerBB);
+  if( pred_begin(footerBB) == pred_end(footerBB)) {
+    new llvm::UnreachableInst(*context, footerBB);
+  }
+  else {
+    irgen->SetBasicBlock(footerBB);
+  }
 
   //Pop Scope
   symtable->popScope();
@@ -180,6 +195,7 @@ llvm::Value* IfStmt::Emit(){
 
     //Emit conditional test code
     llvm::Value* cond = test->Emit();
+
     //Create footerBB
     llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
 
@@ -196,12 +212,16 @@ llvm::Value* IfStmt::Emit(){
     irgen->SetBasicBlock(thenBB);
     body->Emit();
     elseBB->moveAfter(thenBB);
+    //Create then terminator if none present
     if( thenBB->getTerminator() == NULL ){
         llvm::BranchInst::Create(footBB, thenBB);
     }
     irgen->SetBasicBlock(elseBB);
-    elseBody->Emit(); //check if elseBody is NULL first
+    //TODO Check if else body is null
+    elseBody->Emit(); 
     footBB->moveAfter(elseBB);
+
+    //check if elseBody is not yet terminated
     if( elseBB != NULL && elseBB -> getTerminator() == NULL ){
         llvm::BranchInst::Create(footBB, elseBB);
     }
@@ -219,15 +239,10 @@ llvm::Value* IfStmt::Emit(){
     return NULL;
 }
 
-/*Expr *e = this -> expr; 
-llvm::BasicBlock *bb = irgen->GetBasicBlock();
-llvm::LLVMContext *context = irgen->GetContext();
-llvm::Value *returnExpr = e->Emit();
-return llvm::ReturnInst::Create( *context, returnExpr, bb);*/
+/****** Break Statement *******/
 llvm::Value* BreakStmt::Emit(){
   llvm::BasicBlock *currBB = irgen->GetBasicBlock();
   llvm::BranchInst::Create( symtable->breakBlock , currBB );
-  llvm::LLVMContext *context = irgen->GetContext();
   return NULL;
 }
 
@@ -240,23 +255,24 @@ llvm::Value* SwitchLabel::Emit(){
     return NULL;
 }
 
+/******  Switch Case Emit  *******/
 llvm::Value* Case::Emit(){
   //Prep
   llvm::Function *f = irgen->GetFunction();
   llvm::LLVMContext *context = irgen->GetContext();
-
+  //Emit
   stmt->Emit();
-
   return NULL;
 }
 
+/******* Switch Default emit ********/
 llvm::Value* Default::Emit(){
   //Prep
   llvm::Function *f = irgen->GetFunction();
   llvm::LLVMContext *context = irgen->GetContext();
-
+  //Emit
   stmt->Emit();
-    return NULL;
+  return NULL;
 }
 
 /************ Switch Statment IRGen ***********/
@@ -273,60 +289,114 @@ llvm::Value* SwitchStmt::Emit(){
   //Emit Switch Value
   llvm::Value* exp = expr->Emit();
 
-  //Make basic blocks for cases and default
-  llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
-  symtable->breakBlock = footBB;
-
-  llvm::BasicBlock* defaultBB = llvm::BasicBlock::Create(*context, "default", f);
+ 
   List<llvm::BasicBlock*>* BBList = new List<llvm::BasicBlock*>;
-  List<Stmt*>* caseList = new List<Stmt*>;
+  //List<Stmt*>* caseList = new List<Stmt*>;
+  llvm::BasicBlock* defaultBB = llvm::BasicBlock::Create(*context, "default", f);
+
+  //Loop through cases, add BB for each and save both to lists
   for(int x = 0; x < cases->NumElements(); x++){
     if( dynamic_cast<Case*>(cases->Nth(x)) != NULL ){
       llvm::BasicBlock* caseBB = llvm::BasicBlock::Create(*context, "case", f);
       BBList->Append(caseBB);
-      caseList->Append(cases->Nth(x));
+      //caseList->Append(cases->Nth(x));
+      if(dynamic_cast<BreakStmt*>(cases->Nth(x)) != NULL){
+        //caseList->Append(cases->Nth(x));
+      }
     }
     else if( dynamic_cast<Default*>(cases->Nth(x)) != NULL ){
       BBList->Append(defaultBB);
-      caseList->Append(cases->Nth(x));
+      //caseList->Append(cases->Nth(x));
     }
   }
+  
+  //Make basic blocks for cases and default
+  llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
+  symtable->breakBlock = footBB;
 
   //Make Switch Statement
   llvm::SwitchInst* swInst = llvm::SwitchInst::Create(exp, footBB, cases->NumElements(), irgen->GetBasicBlock());
-  llvm::BranchInst::Create(defaultBB, irgen->GetBasicBlock());
+
 
   //Loop through cases and emit
-
-  BreakStmt* brake = NULL;
-  int count = 0;
-  for(int x = 0; x < BBList->NumElements(); x++){
-    llvm::BasicBlock* currBB = BBList->Nth(x);
-    currBB->moveAfter(irgen->GetBasicBlock());
-    irgen->SetBasicBlock(currBB);
-    Stmt* s = caseList->Nth(x);
+  Stmt* stmt = NULL;
+  int BBCount = 0;
+  for(int x = 0; x < cases->NumElements(); x++){
+    llvm::BasicBlock* currBB = NULL;
+    if(BBCount < BBList->NumElements() ){
+      currBB = BBList->Nth(BBCount);
+      irgen->SetBasicBlock(currBB);
+    }
+    Stmt* s = cases->Nth(x);
+    //Emit if case
     if(dynamic_cast<Case*>(s) != NULL){
       Case* c;
       c = dynamic_cast<Case*>(s);
       llvm::Value* labelVal = c->getLabel()->Emit();
-      swInst->addCase(llvm::cast<llvm::ConstantInt>(labelVal), currBB);
+      if(currBB != NULL){
+        swInst->addCase(llvm::cast<llvm::ConstantInt>(labelVal), currBB);
+      }
+      //Prep scope and emit case
+      scope s;
+      symtable->pushScope(&s);
       c->Emit(); 
+      //Ridiculous loop to catch all of the statements in a case
+      for(int y = x; y < cases->NumElements(); y++){
+        if(y+1 < cases->NumElements()){
+          if(dynamic_cast<Case*>(cases->Nth(y+1)) == NULL &&
+             dynamic_cast<Default*>(cases->Nth(y+1)) == NULL){
+            stmt = cases->Nth(y+1);
+            if( stmt != NULL){
+              stmt->Emit();
+            }
+          }
+          else{
+            y = cases->NumElements();
+            break;
+          }
+        }
+      }
+      symtable->popScope();
+      BBCount++;
     }
-    else if( dynamic_cast<Default*>(caseList->Nth(x)) != NULL){
-      defaultBB->moveAfter(irgen->GetBasicBlock());
-      irgen->SetBasicBlock(defaultBB);
-      caseList->Nth(x)->Emit();
-    }
-    brake = dynamic_cast<BreakStmt*>(cases->Nth(count++) );
-    if( brake != NULL){
-        brake->Emit();
-        count++;
+    //Emit if default
+    else if( dynamic_cast<Default*>(cases->Nth(x)) != NULL ){
+      //Create default, push scope and emit
+      swInst->setDefaultDest(defaultBB);
+      scope s;
+      symtable->pushScope(&s);
+      cases->Nth(x)->Emit();
+
+      //Ridiculous loop to catch all of the statements in a case
+      for(int y = x; y < cases->NumElements(); y++){
+        if(y+1 < cases->NumElements()){
+          if(dynamic_cast<Case*>(cases->Nth(y+1)) == NULL &&
+             dynamic_cast<Default*>(cases->Nth(y+1)) == NULL){
+            stmt = cases->Nth(y+1);
+            if( stmt != NULL){
+              stmt->Emit();
+            }
+          }
+          else{
+            y = cases->NumElements();
+            break;
+          }
+        }
+      }
+      //Pop scope and increment BB count
+      symtable->popScope();
+      BBCount++;
     }
   }
 
-  //Move on to Footer
-  footBB->moveAfter(irgen->GetBasicBlock());
+  if( succ_begin(defaultBB) == succ_end(defaultBB) ){
+    llvm::BranchInst::Create(footBB, defaultBB);
+  }
+  if( pred_begin(defaultBB) == pred_end(defaultBB) ){
+    llvm::UnreachableInst(*context, defaultBB);
+  }
   
+  //Check if footer is Unreachable
   if( pred_begin(footBB) == pred_end(footBB)) {
     new llvm::UnreachableInst(*context, footBB);
   }
