@@ -249,6 +249,19 @@ llvm::Value* RelationalExpr::Emit(){
 }
 
 
+/********** Conditional Expr Emit *********/
+llvm::Value* ConditionalExpr::Emit(){
+  //llvm::SelectInst::Create(Value *condition, Value *trueValue, Value *falseValue, const Twine &NameStr, BasicBlock *InsertAtEnd );
+  llvm::BasicBlock *bb = irgen->GetBasicBlock();
+  //IfStmt* ifstmt = new Ifstmt(this->cond, this->trueExpr, this->falseExpr);
+  llvm::Value* cond = this->cond->Emit();
+  llvm::Value* trueVal = this->trueExpr->Emit();
+  llvm::Value* falseVal = this->falseExpr->Emit();
+
+  return llvm::SelectInst::Create(cond, trueVal, falseVal, "Selection", bb);
+}
+
+
 /********** Logical Expr Emit ***********/
 llvm::Value* LogicalExpr::Emit(){
   //llvm::BinaryOperator::CreateAnd(Value *S1, Value *S2, const Twine &Name, BasicBlock *InsertAtEnd)
@@ -325,9 +338,9 @@ llvm::Value* PostfixExpr::Emit(){
 /********** Assign Expr Emit **********/
 llvm::Value* AssignExpr::Emit(){
     Operator *op = this->op;
+    llvm::Value *rVal = this->right->Emit();
     llvm::Value *lVal = this->left->Emit();
     llvm::LoadInst* leftLocation = llvm::cast<llvm::LoadInst>(lVal);
-    llvm::Value *rVal = this->right->Emit();
 
     //Regular assignment
     if(this->op->IsOp("=")){
@@ -372,7 +385,9 @@ llvm::Value* AssignExpr::Emit(){
         llvm::Value *sInst = new llvm::StoreInst(div, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
       }
     }
-    return leftLocation;
+    return this->left->Emit();
+    //return new llvm::LoadInst(lVal, "", irgen->GetBasicBlock());
+    //return leftLocation;
 }
 
 /********** ArrayAccess Emit ***********/
