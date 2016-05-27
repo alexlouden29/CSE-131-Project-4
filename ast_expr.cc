@@ -256,24 +256,24 @@ llvm::Value* ArrayAccess::Emit(){
 
 //Field Acess for Functions
 llvm::Value* FieldAccess::Emit(){
-    if( this->base != NULL){
-        llvm::Value* base = this->base->Emit();
-        llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(base);
-        llvm::Value *location = l->getPointerOperand();
+  if( this->base != NULL){
+    llvm::Value* base = this->base->Emit();
+    llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(base);
+    llvm::Value *location = l->getPointerOperand();
 
-        llvm::Value *idx;
-        string x = "x";
-        int i;
-        if(this->field->GetName() == x){
-            idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
-        }
-        else{
-            idx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
-        }
-        llvm::Value *v = llvm::ExtractElementInst::Create(base, idx, "", irgen->GetBasicBlock());
-        return v;
+    llvm::Value *idx;
+    string x = "x";
+    int i;
+    if(this->field->GetName() == x){
+      idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
     }
-    return NULL;
+    else{
+      idx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+    }
+    llvm::Value *v = llvm::ExtractElementInst::Create(base, idx, "", irgen->GetBasicBlock());
+    return v;
+  }
+  return NULL;
 }
 
 llvm::Value* IntConstant::Emit(){
