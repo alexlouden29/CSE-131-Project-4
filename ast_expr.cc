@@ -62,13 +62,17 @@ llvm::Value* ArithmeticExpr::Emit(){
       llvm::Value *rhs = this->right->Emit();
       llvm::Value* vec = NULL;
       llvm::Value* constFP = NULL;
+      int vecNum = 0;
+      
 
       if(lhs->getType() == irgen->GetType(Type::vec2Type)){
+        vecNum = 2;
         vec = lhs;
         //constFP = dynamic_cast<llvm::Constant*>(rhs);
         constFP = rhs;
       }
       else if(rhs->getType() == irgen->GetType(Type::vec2Type)){
+        vecNum = 2;
         vec = rhs;
         //constFP = dynamic_cast<llvm::Constant*>(lhs);
         constFP = lhs;
@@ -82,7 +86,7 @@ llvm::Value* ArithmeticExpr::Emit(){
 
       //looping through elements in vector
       //for(int i = 0; i < vector->getNumElements(); i++){
-      for(int i = 0; i < 2; i++){
+      for(int i = 0; i < vecNum; i++){
         llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
 
         //inserting element into the empty vector
