@@ -18,6 +18,7 @@ llvm::Value* ArithmeticExpr::Emit(){
       llvm::Value *oldVal = this->right->Emit(); //"loading from pointer"
 
       //getting the pointer of the value
+      //llvm::LoadInst *loadInst = new llvm::LoadInst(oldVal, "", bb);
       llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(oldVal);
       llvm::Value *location = l->getPointerOperand(); //getting pointer?
 
@@ -59,114 +60,87 @@ llvm::Value* ArithmeticExpr::Emit(){
       //multiplying float and scalar value
       llvm::Value *lhs = this->left->Emit();
       llvm::Value *rhs = this->right->Emit();
-      llvm::Value* vec;
-      llvm::Value* constFP;
+      llvm::Value* vec = NULL;
+      llvm::Constant* constFP = NULL;
+
       if(lhs->getType() == irgen->GetType(Type::vec2Type)){
         vec = lhs;
-        constFP = rhs;
+        constFP = dynamic_cast<llvm::Constant*>(rhs);
       }
       else if(rhs->getType() == irgen->GetType(Type::vec2Type)){
         vec = rhs;
-        constFP = lhs;
+        constFP = dynamic_cast<llvm::Constant*>(lhs);
       }
-      else{
-        //cout << "BOOGERS" << endl;
-        vec = NULL;
-        constFP = NULL;
+      llvm::Type *ty = irgen->GetType(Type::vec2Type);
+      llvm::Value *v = llvm::Constant::getNullValue(ty); //getting empty vec2Type 
+
+      //loading vector and making it a vector type
+      llvm::LoadInst *loadInst = new llvm::LoadInst(vec, "", irgen->GetBasicBlock());
+      llvm::VectorType* vector = llvm::cast<llvm::VectorType>(loadInst);
+
+      //looping through elements in vector
+      for(int i = 0; i < vector->getNumElements(); i++){
+        llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
+
+        //inserting element into the empty vector
+        v = llvm::InsertElementInst::Create(v, constFP, num, "", irgen->GetBasicBlock());
       }
-      if( vec != NULL ) {
-        
-        llvm::Type *ty = irgen->GetType(Type::vec2Type);
-        llvm::Value *v = llvm::Constant::getNullValue(ty); //getting empty vec2Type  
-        //loading vector and making it a vector type
-        llvm::LoadInst* lInst = llvm::cast<llvm::LoadInst>(vec);
-        llvm::VectorType* vector = llvm::cast<llvm::VectorType>(lInst);
-        
-        //looping through elements in vector
-        for(int i = 0; i < vector->getNumElements(); i++){
-          llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
-
-          //getting the element at index
-          llvm::Value* elem = llvm::ExtractElementInst::Create(vec, num);
-
-          //multiplying element with constFP
-          llvm::Value* mult = llvm::BinaryOperator::CreateFMul(elem, constFP);
-
-          //inserting element into the empty vector
-          llvm::InsertElementInst::Create(v, mult, num, "", irgen->GetBasicBlock());
-        }
-      
-        llvm::Value* ptr = lInst->getPointerOperand();
-
-        //storing new vector to where the old vector was I think
-        llvm::Value* sInst = new llvm::StoreInst(v, ptr, irgen->GetBasicBlock());
-        return v;
-/*
-        for(int i = 0; i < vector->getNumElements(); i++){
-          llvm::Value *index = llvm::ConstantInt::get(irgen->GetIntType(), i);
-          llvm::InsertElementInst::Create(v, constFP, index, "", irgen->GetBasicBlock());
-        }
-        llvm::Value * mult = llvm::BinaryOperator::CreateMul(v, vec);
-        llvm::Value* sInst = new llvm::StoreInst(v, vec, irgen->GetBasicBlock());
-*/
-      }
-      else{
-        llvm::BasicBlock *bb = irgen->GetBasicBlock();
-        llvm::Value *rhs = this->right->Emit();
-        llvm::Value *lhs = this->left->Emit();
-        llvm::Value *mul = llvm::BinaryOperator::CreateMul(lhs, rhs, "", bb);
-        return mul;
-      }
+      llvm::Value* load = loadInst;
+      return llvm::BinaryOperator::CreateFMul(v, load, "", irgen->GetBasicBlock());
     }
-        return NULL;
+    return NULL;
 }
 
 llvm::Value* RelationalExpr::Emit(){
-    llvm::Value *lhs = this->left->Emit();
-    llvm::Value *rhs = this->right->Emit();
-    llvm::BasicBlock *bb = irgen->GetBasicBlock();
-    Operator *op = this->op;
-    if( (lhs->getType() == irgen->GetType(Type::floatType)) && (rhs->getType() == irgen->GetType(Type::floatType)) ){
-      if( op->IsOp(">") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OGT, lhs, rhs, "", bb);
-      }
-      if( op->IsOp("<") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OLT, lhs, rhs, "", bb);
-      }
-      if( op->IsOp(">=") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OGE, lhs, rhs, "", bb);
-      }
-      if( op->IsOp("<=") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OLE, lhs, rhs, "", bb);
-      }
-      if( op->IsOp("==") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OEQ, lhs, rhs, "", bb);
-      }
-      if( op->IsOp("!=") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_ONE, lhs, rhs, "", bb);
-      }
+  llvm::Value *lhs = this->left->Emit();
+  llvm::Value *rhs = this->right->Emit();
+  llvm::BasicBlock *bb = irgen->GetBasicBlock();
+  Operator *op = this->op;
+
+  //comparing float types
+  if( (lhs->getType() == irgen->GetType(Type::floatType)) && (rhs->getType() == irgen->GetType(Type::floatType)) ){
+    if( op->IsOp(">") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OGT, lhs, rhs, "", bb);
     }
-    if( (lhs->getType() == irgen->GetType(Type::intType)) && (rhs->getType() == irgen->GetType(Type::intType)) ){
-      if( op->IsOp(">") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SGT, lhs, rhs, "", bb);
-      }
-      if( op->IsOp("<") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SLT, lhs, rhs, "", bb);
-      }
-      if( op->IsOp(">=") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SGE, lhs, rhs, "", bb);
-      }
-      if( op->IsOp("<=") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SLE, lhs, rhs, "", bb);
-      }
-      if( op->IsOp("==") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_EQ, lhs, rhs, "", bb);
-      }
-      if( op->IsOp("!=") ){
-        return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_NE, lhs, rhs, "", bb);
-      }
+    if( op->IsOp("<") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OLT, lhs, rhs, "", bb);
     }
-    return NULL;
+    if( op->IsOp(">=") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OGE, lhs, rhs, "", bb);
+    }
+    if( op->IsOp("<=") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OLE, lhs, rhs, "", bb);
+    }
+    if( op->IsOp("==") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_OEQ, lhs, rhs, "", bb);
+    }
+    if( op->IsOp("!=") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::FCmpInst::FCMP_ONE, lhs, rhs, "", bb);
+    }
+  }
+
+  //comparing int types
+  if( (lhs->getType() == irgen->GetType(Type::intType)) && (rhs->getType() == irgen->GetType(Type::intType)) ){
+    if( op->IsOp(">") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SGT, lhs, rhs, "", bb);
+    }
+    if( op->IsOp("<") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SLT, lhs, rhs, "", bb);
+    }
+    if( op->IsOp(">=") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SGE, lhs, rhs, "", bb);
+    }
+    if( op->IsOp("<=") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SLE, lhs, rhs, "", bb);
+    }
+    if( op->IsOp("==") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_EQ, lhs, rhs, "", bb);
+    }
+    if( op->IsOp("!=") ){
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_NE, lhs, rhs, "", bb);
+    }
+  }
+  return NULL;
 }
 
 llvm::Value* PostfixExpr::Emit(){
@@ -276,7 +250,7 @@ llvm::Value* AssignExpr::Emit(){
 //Array Access
 llvm::Value* ArrayAccess::Emit(){
   //llvm::GetElementPtrInst::Create(Value *Ptr, ArrayRef<Value*> IdxList, const Twine &NameStr, BasicBlock *InsertAtEnd);
-  llvm::GetElementPtrInst::Create(
+  //llvm::GetElementPtrInst::Create(
   return NULL;
 }
 
