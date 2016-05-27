@@ -9,13 +9,20 @@ llvm::Type *IRGenerator::GetType(Type* astTy) const
   llvm::Type *ty = NULL;
   if ( astTy == Type::intType ) {
     ty = IRGenerator::GetIntType();
-  } else if ( astTy == Type::boolType ) {
+  } 
+  else if ( astTy == Type::boolType ) {
     ty = IRGenerator::GetBoolType();
-  } else if ( astTy == Type::floatType ) {
+  } 
+  else if ( astTy == Type::floatType ) {
     ty = IRGenerator::GetFloatType();
   }
   else if (astTy == Type::vec2Type ){
     ty = llvm::VectorType::get(llvm::Type::getFloatTy(*context), 2);
+  }
+  else if (dynamic_cast<ArrayType*>(astTy) != NULL ){
+    //get (Type *ElementType, uint64_t NumElements)
+    ArrayType* arrayTy = dynamic_cast<ArrayType*>(astTy);
+    ty = llvm::ArrayType::get(GetType(arrayTy->GetElemType()), arrayTy->GetElemCount());
   }
   return ty;
 }
