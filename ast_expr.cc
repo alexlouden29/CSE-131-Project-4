@@ -323,45 +323,45 @@ llvm::Value* PostfixExpr::Emit(){
     //getting the basic block
     llvm::BasicBlock *bb = irgen->GetBasicBlock();
 
-    //Get a useful '1'
-    llvm::Type *intTy = irgen->GetIntType();
-    llvm::Value *one = llvm::ConstantInt::get(intTy, 1);
-
-
-    Operator *op = this->op;
     //Int Post fix
     if( oldVal->getType() == irgen->GetType(Type::intType)){
+        //Get a useful '1'
+        llvm::Type *intTy = irgen->GetIntType();
+        llvm::Value *one = llvm::ConstantInt::get(intTy, 1);
         //post dec
-        if( op->IsOp("--") ){
+        if( this->op->IsOp("--") ){
             //creating binary op
             llvm::Value *dec = llvm::BinaryOperator::CreateSub(oldVal, one, "", bb);
             //storing new value
             llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
         }
-        if( op->IsOp("++") ){
+        if( this->op->IsOp("++") ){
             //creating binary op
-            llvm::Value *dec = llvm::BinaryOperator::CreateAdd(oldVal, one, "", bb);
+            llvm::Value *inc = llvm::BinaryOperator::CreateAdd(oldVal, one, "", bb);
             //storing new value
-            llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
+            llvm::Value* sInst = new llvm::StoreInst(inc, location, bb);
         }
     }
     //Float Post fix
     else if( oldVal->getType() == irgen->GetType(Type::floatType)){
+       //Get a useful '1'
+        llvm::Type* type = irgen->GetFloatType();
+        llvm::Constant* one = llvm::ConstantFP::get(type,1.0);
         //post dec
-        if( op->IsOp("--") ){
+        if( this->op->IsOp("--") ){
             //creating binary op
             llvm::Value *dec = llvm::BinaryOperator::CreateFSub(oldVal, one, "", bb);
             //storing new value
             llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
         }
-        if( op->IsOp("++") ){
+        //Post inc
+        if( this->op->IsOp("++") ){
             //creating binary op
-            llvm::Value *dec = llvm::BinaryOperator::CreateFAdd(oldVal, one, "", bb);
+            llvm::Value *inc = llvm::BinaryOperator::CreateFAdd(oldVal, one, "", bb);
             //storing new value
-            llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
+            llvm::Value* sInst = new llvm::StoreInst(inc, location, bb);
         }
     }
-    //TODO: Why?
     return oldVal;
 }
 
