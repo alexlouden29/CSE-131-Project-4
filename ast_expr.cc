@@ -211,7 +211,7 @@ llvm::Value* AssignExpr::Emit(){
     llvm::Value *rVal = this->right->Emit();
 
     //Regular assignment
-    if(op->IsOp("=")){
+    if(this->op->IsOp("=")){
         llvm::Value* sInst = new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
     }
     //Float assignments
@@ -259,8 +259,13 @@ llvm::Value* AssignExpr::Emit(){
 //Array Access
 llvm::Value* ArrayAccess::Emit(){
   //llvm::GetElementPtrInst::Create(Value *Ptr, ArrayRef<Value*> IdxList, const Twine &NameStr, BasicBlock *InsertAtEnd);
-  //llvm::GetElementPtrInst::Create(
-  return NULL;
+  //idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+  std::vector<llvm::Value*> arrayBase;
+  arrayBase.push_back(llvm::ConstantInt::get(irgen->GetIntType(), 0));
+  arrayBase.push_back(subscript->Emit());
+  llvm::Value* arrayElem = llvm::GetElementPtrInst::Create(dynamic_cast<llvm::LoadInst*>(base->Emit())->getPointerOperand(), arrayBase, "", irgen->GetBasicBlock());
+  //llvm::Value* lInst = new llvm::LoadInst( v, exprName, irgen->GetBasicBlock() );
+  return new llvm::LoadInst(arrayElem, "", irgen->GetBasicBlock());
 }
 
 //Field Acess for Functions
