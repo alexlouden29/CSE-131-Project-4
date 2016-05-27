@@ -54,6 +54,25 @@ llvm::Value* ArithmeticExpr::Emit(){
   llvm::Value *rhs = this->right->Emit();
   llvm::BasicBlock *bb = irgen->GetBasicBlock();
 
+  if( llvm::cast<llvm::ShuffleVectorInst>( lhs ) != NULL ){
+    std::vector<llvm::Constant*> swizzles;
+    char* f = dynamic_cast<FieldAccess*>(this->left)->getField()->GetName();
+    llvm::Constant* idx;
+      for(char* it = f; *it; ++it){
+        if(*it == 'x')
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+        else if(*it == 'y')
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+        else if(*it == 'z')
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+        else if(*it == 'w')
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+        else
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 100);
+        swizzles.push_back(idx);
+      } 
+  }
+
   //dealing with arithmetic between floats and 
   if( lhs->getType() == irgen->GetType(Type::floatType) &&
       rhs->getType() == irgen->GetType(Type::floatType) ){
@@ -344,6 +363,34 @@ llvm::Value* ArrayAccess::Emit(){
 
 //Field Acess for Functions
 llvm::Value* FieldAccess::Emit(){
+  if( this->base != NULL ){
+    llvm::Value* base = this->base->Emit();
+    llvm::BasicBlock* bb = irgen->GetBasicBlock();
+    
+    std::vector<llvm::Constant*> swizzles;
+    if( this->field != NULL ){
+      char* f = this->field->GetName();
+      llvm::Constant* idx;
+      for(char* it = f; *it; ++it){
+        if(*it == 'x')
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+        else if(*it == 'y')
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+        else if(*it == 'z')
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+        else if(*it == 'w')
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+        else
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 100);
+        swizzles.push_back(idx);
+      }
+      llvm::ArrayRef<llvm::Constant*> swizzleArrayRef(swizzles);
+      llvm::Constant* mask = llvm::ConstantVector::get(swizzleArrayRef);
+      llvm::Value* newVec = new llvm::ShuffleVectorInst(base, base, mask, "", bb);
+      return newVec;
+    }
+  }
+  /*
   if( this->base != NULL){
     llvm::Value* base = this->base->Emit();
     llvm::BasicBlock* bb = irgen->GetBasicBlock();
@@ -372,6 +419,7 @@ llvm::Value* FieldAccess::Emit(){
     llvm::Value *v = llvm::ExtractElementInst::Create(base, idx, "", bb);
     return v;
   }
+  */
   return NULL;
 }
 

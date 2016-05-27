@@ -215,6 +215,7 @@ class FieldAccess : public LValue
   public:
     FieldAccess(Expr *base, Identifier *field); //ok to pass NULL base
     const char *GetPrintNameForNode() { return "FieldAccess"; }
+    Identifier* getField() {return field;}
     void PrintChildren(int indentLevel);
     llvm::Value *Emit();
 };
