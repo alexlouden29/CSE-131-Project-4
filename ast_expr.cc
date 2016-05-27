@@ -10,10 +10,11 @@
 #include "symtable.h"
 
 
+/********** Arithmetic Expr Emit **********/
 llvm::Value* ArithmeticExpr::Emit(){
   Operator *op = this->op;
 
-  //pre inc
+  //pre increment
   if( this->left == NULL && this->right != NULL){
       //getting the value at the pointer
       llvm::Value *oldVal = this->right->Emit();
@@ -50,30 +51,16 @@ llvm::Value* ArithmeticExpr::Emit(){
       }
   }
 
+  //Standard two piece arithmetic expressions
+  //Setup
   llvm::Value *lhs = this->left->Emit();
   llvm::Value *rhs = this->right->Emit();
   llvm::BasicBlock *bb = irgen->GetBasicBlock();
 
   if( llvm::cast<llvm::ShuffleVectorInst>( lhs ) != NULL ){
-    std::vector<llvm::Constant*> swizzles;
-    char* f = dynamic_cast<FieldAccess*>(this->left)->getField()->GetName();
-    llvm::Constant* idx;
-      for(char* it = f; *it; ++it){
-        if(*it == 'x')
-          idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
-        else if(*it == 'y')
-          idx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
-        else if(*it == 'z')
-          idx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
-        else if(*it == 'w')
-          idx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
-        else
-          idx = llvm::ConstantInt::get(irgen->GetIntType(), 100);
-        swizzles.push_back(idx);
-      } 
   }
 
-  //dealing with arithmetic between floats and 
+  //dealing with arithmetic between floats 
   if( lhs->getType() == irgen->GetType(Type::floatType) &&
       rhs->getType() == irgen->GetType(Type::floatType) ){
     if( op->IsOp("+") ){
@@ -261,6 +248,8 @@ llvm::Value* RelationalExpr::Emit(){
   return NULL;
 }
 
+
+/********* Postfix Expr Emit *********/
 llvm::Value* PostfixExpr::Emit(){
     //getting the value at the pointer
     llvm::Value *oldVal = this->left->Emit(); //"loading from pointer"
@@ -314,6 +303,7 @@ llvm::Value* PostfixExpr::Emit(){
     return oldVal;
 }
 
+/********** Assign Expr Emit **********/
 llvm::Value* AssignExpr::Emit(){
     Operator *op = this->op;
     llvm::Value *lVal = this->left->Emit();
@@ -366,7 +356,7 @@ llvm::Value* AssignExpr::Emit(){
     return leftLocation;
 }
 
-//Array Access
+/********** ArrayAccess Emit ***********/
 llvm::Value* ArrayAccess::Emit(){
   //llvm::GetElementPtrInst::Create(Value *Ptr, ArrayRef<Value*> IdxList, const Twine &NameStr, BasicBlock *InsertAtEnd);
   //idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
@@ -378,7 +368,7 @@ llvm::Value* ArrayAccess::Emit(){
   return new llvm::LoadInst(arrayElem, "", irgen->GetBasicBlock());
 }
 
-//Field Acess for Functions
+/********* Field Access Emit **********/
 llvm::Value* FieldAccess::Emit(){
   if( this->base != NULL ){
     llvm::Value* base = this->base->Emit();
@@ -440,6 +430,7 @@ llvm::Value* FieldAccess::Emit(){
   return NULL;
 }
 
+/********* Emits for int, float, bool, any Var ***********/
 llvm::Value* IntConstant::Emit(){
     llvm::Type *intTy = irgen->GetIntType();
     return llvm::ConstantInt::get(intTy, this->value);
