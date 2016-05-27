@@ -25,30 +25,60 @@ llvm::Value* ArithmeticExpr::Emit(){
 
       //getting the basic block
       llvm::BasicBlock *bb = irgen->GetBasicBlock();
+      //int case
+      if( oldVal->getType() == irgen->GetIntType() ){
+        llvm::Type* type = irgen->GetIntType();
+        llvm::Constant* one = llvm::ConstantInt::get(type,1);
+        llvm::Constant* negOne = llvm::ConstantInt::get(type,1, true);
+        //int val = dynamic_cast<llvm::ConstantInt*>(oldVal)->getSExtValue();
+        if( op->IsOp("++") ){
+          //adding one
+          llvm::Value *inc = llvm::BinaryOperator::CreateAdd(oldVal, one, "", bb);
+          llvm::Value* sInst = new llvm::StoreInst(inc, location, bb);
+          return inc;
+        }
+        if( op->IsOp("--") ){
+          //subtracting one
+          llvm::Value *dec = llvm::BinaryOperator::CreateSub(oldVal, one, "", bb);
+          llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
+          return dec;
+        }
+        if( op->IsOp("+") ){
+          //llvm::Value* sInst = new llvm::StoreInst(oldVal, location, bb);
+          return oldVal;
+        }
+        if( op->IsOp("-") ){
+          llvm::Value* mul = llvm::BinaryOperator::CreateMul(oldVal, negOne, "", bb);
+         // llvm::Value* sInst = new llvm::StoreInst(mul, location, bb);
+          return mul;
+        }
+      }
+      //Float case
+      else if( oldVal->getType() == irgen->GetFloatType() ){
+        llvm::Type* type = irgen->GetFloatType();
+        llvm::Constant* one = llvm::ConstantFP::get(type,1.0);
+        if( op->IsOp("++") ){
+          //adding one
+          llvm::Value *inc = llvm::BinaryOperator::CreateFAdd(oldVal, one, "", bb);
+          llvm::Value* sInst = new llvm::StoreInst(inc, location, bb);
+          return inc;
+        }
+        if( op->IsOp("--") ){
+          //subtracting one
+          llvm::Value *dec = llvm::BinaryOperator::CreateFSub(oldVal, one, "", bb);
+          llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
+          return dec;
+        }
+        if( op->IsOp("+") ){
+          //llvm::Value* sInst = new llvm::StoreInst(oldVal, location, bb);
+          return oldVal;
+        }
+        if( op->IsOp("-") ){
+          //llvm::Value* sInst = new llvm::StoreInst(oldVal, location, bb);
+          return oldVal;
+        }
+      }
 
-      llvm::Type *type = NULL;
-      llvm::Value *one = NULL;
-      if( oldVal->getType() == irgen->GetType(Type::intType) ){
-        type = irgen->GetIntType();
-        one = llvm::ConstantInt::get(type,1);
-      }
-      else if( oldVal->getType() == irgen->GetType(Type::floatType) ){
-        type = irgen->GetFloatType();
-        one = llvm::ConstantFP::get(type,1);
-      }
-
-      if( op->IsOp("++") ){
-        //adding one
-        llvm::Value *inc = llvm::BinaryOperator::CreateAdd(oldVal, one, "", bb);
-        llvm::Value* sInst = new llvm::StoreInst(inc, location, bb);
-        return inc;
-      }
-      if( op->IsOp("--") ){
-        //subtracting one
-        llvm::Value *dec = llvm::BinaryOperator::CreateSub(oldVal, one, "", bb);
-        llvm::Value* sInst = new llvm::StoreInst(dec, location, bb);
-        return dec;
-      }
   }
 
   //Standard two piece arithmetic expressions
@@ -466,6 +496,24 @@ llvm::Value* FieldAccess::Emit(){
   }
   */
   return NULL;
+}
+
+/*********** Call Emit ***********/
+llvm::Value* Call::Emit(){
+  //Used for "Call" expression
+  // Func should be the address of the function
+  // Args is an ArrayRef<Value*> of the Actuals LLVM::Value
+  //llvm::CallInst::Create( Value *Func, ArrayRef<Value*> Args, const Twine &NameStr, BasicBlock *InsertAtEnd );
+  //llvm::ArrayRef<llvm::Constant*> swizzleArrayRef(swizzles);
+  //idx = llvm::ConstantInt::get(irgen->GetIntType(), 100);
+  //std::vector<llvm::Constant*> swizzles;
+  llvm::Function* func = (llvm::Function*)symtable->lookup(field->GetName());
+  std::vector<llvm::Value*> valActuals;
+  for(int x = 0; x < actuals->NumElements(); x++){
+    valActuals.push_back(actuals->Nth(x)->Emit());
+  }
+  
+  return llvm::CallInst::Create(func, valActuals, "Call", irgen->GetBasicBlock());
 }
 
 /********* Emits for int, float, bool, any Var ***********/
