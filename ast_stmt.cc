@@ -70,7 +70,9 @@ llvm::Value* StmtBlock::Emit(){
 llvm::Value* DeclStmt::Emit(){
     VarDecl* varD = (VarDecl*)this->GetDecl();
     llvm::Value* v = varD->Emit();
-    new llvm::StoreInst (varD->GetAssignTo()->Emit(), v, irgen->GetBasicBlock());
+    if(varD->GetAssignTo() != NULL){
+      new llvm::StoreInst (varD->GetAssignTo()->Emit(), v, irgen->GetBasicBlock());
+    }
     return v;
 
 }
