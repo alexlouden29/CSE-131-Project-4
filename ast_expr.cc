@@ -249,6 +249,25 @@ llvm::Value* RelationalExpr::Emit(){
 }
 
 
+/********** Logical Expr Emit ***********/
+llvm::Value* LogicalExpr::Emit(){
+  //llvm::BinaryOperator::CreateAnd(Value *S1, Value *S2, const Twine &Name, BasicBlock *InsertAtEnd)
+  //llvm::BinaryOperator::CreateOr(Value *S1, Value *S2, const Twine &Name, BasicBlock *InsertAtEnd)
+  //Setup
+  llvm::Value *lhs = this->left->Emit();
+  llvm::Value *rhs = this->right->Emit();
+  llvm::BasicBlock *bb = irgen->GetBasicBlock();
+
+  if( this->op->IsOp("&&") ){
+    return llvm::BinaryOperator::CreateAnd(lhs, rhs, "LogicalAnd", bb);
+  }
+  if( this->op->IsOp("||") ){
+    return llvm::BinaryOperator::CreateOr(lhs, rhs, "LogicalOr", bb);
+  }
+  return NULL;
+}
+
+
 /********* Postfix Expr Emit *********/
 llvm::Value* PostfixExpr::Emit(){
     //getting the value at the pointer

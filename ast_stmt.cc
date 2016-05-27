@@ -217,10 +217,10 @@ llvm::Value* IfStmt::Emit(){
         llvm::BranchInst::Create(footBB, thenBB);
     }
      
-    /*if( elseBody != NULL ){
+    if( elseBody != NULL ){
       irgen->SetBasicBlock(elseBB);
       elseBody->Emit(); 
-    }*/
+    }
     footBB->moveAfter(elseBB);
 
     //check if elseBody is not yet terminated
