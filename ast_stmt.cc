@@ -118,6 +118,9 @@ llvm::Value* ForStmt::Emit(){
 
     //Emit body, set branch after body
     irgen->SetBasicBlock(bodyBB);
+
+    //if there's a break in the for loop
+    symtable->breakBlock = footerBB;
     body->Emit();
     llvm::BranchInst::Create(stepBB, bodyBB);
    
@@ -168,6 +171,10 @@ llvm::Value* WhileStmt::Emit(){
 
   //Emit body, set branch after body
   irgen->SetBasicBlock(bodyBB);
+
+  //if there's a break in the while loop
+  symtable->breakBlock = footerBB;
+
   body->Emit();
   llvm::BranchInst::Create(headerBB, bodyBB);
    
@@ -246,6 +253,7 @@ llvm::Value* IfStmt::Emit(){
 
 /****** Break Statement *******/
 llvm::Value* BreakStmt::Emit(){
+  irgen->GetOrCreateModule("mod.bc")->dump();
   llvm::BasicBlock *currBB = irgen->GetBasicBlock();
   llvm::BranchInst::Create( symtable->breakBlock , currBB );
   return NULL;
