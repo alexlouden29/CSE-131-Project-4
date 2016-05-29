@@ -99,14 +99,6 @@ llvm::Value* ArithmeticExpr::Emit(){
     //put the shuffleVectors into vectors
     //llvm::Value *vecLHS = llvm::Constant::getNullValue(llvm::VectorType);
     //llvm::Value *vecRHS = llvm::Constant::getNullValue(llvm::VectorType);
-    
-
-
-
-
-
-
-
 
     if( op->IsOp("+") ){
       //return llvm::BinaryOperator::CreateFAdd();
