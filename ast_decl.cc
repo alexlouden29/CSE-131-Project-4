@@ -77,14 +77,17 @@ llvm::Value* FnDecl::Emit(){
         argIter->setName(name);
         llvm::Value* sInst = new llvm::StoreInst( argIter, v, irgen->GetBasicBlock());
         x++;
-
     }
 
     
     //calling emit on function body
     llvm::Value* returnExpr = this->body->Emit();
+    if(bb->getTerminator() == NULL){
+        llvm::ReturnInst::Create( *context, bb );
+    }
     symtable->popScope();
     symtable->addSymbol(name, f);
+    symtable->globalScope = true;
     return f;
 }
 

@@ -48,6 +48,10 @@ llvm::Value* ReturnStmt::Emit(){
     Expr *e = this -> expr; 
     llvm::BasicBlock *bb = irgen->GetBasicBlock();
     llvm::LLVMContext *context = irgen->GetContext();
+    llvm::Function *func = irgen->GetFunction();
+    if(func->getReturnType() == irgen->GetVoidType()){
+        return llvm::ReturnInst::Create( *context, bb );
+    }
     llvm::Value *returnExpr = e->Emit();
     return llvm::ReturnInst::Create( *context, returnExpr, bb);
 }
@@ -119,7 +123,7 @@ llvm::Value* ForStmt::Emit(){
     //Emit body, set branch after body
     irgen->SetBasicBlock(bodyBB);
 
-    //if there's a break or while in the for loop
+    //if there's a break or continue in the for loop
     symtable->breakBlock = footerBB;
     symtable->continueBlock = stepBB; //either stepBB or headerBB
 
@@ -214,7 +218,7 @@ llvm::Value* IfStmt::Emit(){
     //Create elseBB
     llvm::BasicBlock* elseBB = llvm::BasicBlock::Create(*context, "else", f);
     
-    //Organize the shit show of branchs and blocks
+    //Organize the shit show of branches and blocks
     llvm::BasicBlock* thenBB = llvm::BasicBlock::Create(*context, "then", f);
     llvm::BranchInst::Create(thenBB, elseBody ? elseBB:footBB, cond, irgen->GetBasicBlock());
     thenBB->moveAfter(irgen->GetBasicBlock());
@@ -222,7 +226,7 @@ llvm::Value* IfStmt::Emit(){
     body->Emit();
     elseBB->moveAfter(thenBB);
 
-    //Create then terminator if none present
+    //Create the terminator if none present
     if( thenBB->getTerminator() == NULL ){
         llvm::BranchInst::Create(footBB, thenBB);
     }
@@ -262,7 +266,7 @@ llvm::Value* BreakStmt::Emit(){
 }
 
 llvm::Value* ContinueStmt::Emit(){
-    irgen->GetOrCreateModule("mod.bc")->dump();
+    //irgen->GetOrCreateModule("mod.bc")->dump();
     llvm::BasicBlock *currBB = irgen->GetBasicBlock();
     llvm::BranchInst::Create( symtable->continueBlock, currBB );
     return NULL;

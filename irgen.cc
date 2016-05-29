@@ -25,6 +25,9 @@ llvm::Type *IRGenerator::GetType(Type* astTy) const
   else if (astTy == Type::vec4Type ){
     ty = llvm::VectorType::get(llvm::Type::getFloatTy(*context), 4);
   }
+  else if (astTy == Type::voidType ){
+    ty = IRGenerator::GetVoidType();
+  }
   else if (dynamic_cast<ArrayType*>(astTy) != NULL ){
     //get (Type *ElementType, uint64_t NumElements)
     ArrayType* arrayTy = dynamic_cast<ArrayType*>(astTy);
@@ -83,6 +86,11 @@ llvm::Type *IRGenerator::GetBoolType() const {
 
 llvm::Type *IRGenerator::GetFloatType() const {
    llvm::Type *ty = llvm::Type::getFloatTy(*context);
+   return ty;
+}
+
+llvm::Type *IRGenerator::GetVoidType() const {
+   llvm::Type *ty = llvm::Type::getVoidTy(*context);
    return ty;
 }
 
