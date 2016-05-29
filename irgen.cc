@@ -45,6 +45,7 @@ IRGenerator::IRGenerator() :
 {
   footBlocks = new std::stack<llvm::BasicBlock*>;
   loopFootBlocks = new std::stack<llvm::BasicBlock*>;
+  continueBlocks = new std::stack<llvm::BasicBlock*>;
 }
 
 IRGenerator::~IRGenerator() {

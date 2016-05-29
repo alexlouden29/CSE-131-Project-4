@@ -31,6 +31,7 @@ class IRGenerator {
     //Stack of footers for nested and break
     std::stack<llvm::BasicBlock*>* footBlocks;
     std::stack<llvm::BasicBlock*>* loopFootBlocks;
+    std::stack<llvm::BasicBlock*>* continueBlocks;
 
     // Add your helper functions here
     llvm::Function *GetFunction() const;
