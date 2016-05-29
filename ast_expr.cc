@@ -88,26 +88,21 @@ llvm::Value* ArithmeticExpr::Emit(){
   llvm::BasicBlock *bb = irgen->GetBasicBlock();
 
   //dealing with arithmetic between swizzles
-  llvm::ShuffleVectorInst *shuffleLHS = llvm::cast<llvm::ShuffleVectorInst>(lhs);
-  llvm::ShuffleVectorInst *shuffleRHS = llvm::cast<llvm::ShuffleVectorInst>(rhs);
+  llvm::ShuffleVectorInst *shuffleLHS = dynamic_cast<llvm::ShuffleVectorInst*>(this->left->Emit());
+  llvm::ShuffleVectorInst *shuffleRHS = dynamic_cast<llvm::ShuffleVectorInst*>(this->right->Emit());
   if( ( shuffleLHS != NULL ) && ( shuffleRHS != NULL ) ){
-
-    //setup for shuffle vectors
-    llvm::ShuffleVectorInst *shuffleLHS = llvm::cast<llvm::ShuffleVectorInst>(lhs);
-    llvm::ShuffleVectorInst *shuffleRHS = llvm::cast<llvm::ShuffleVectorInst>(rhs);
-    
-    //put the shuffleVectors into vectors
-    //llvm::Value *vecLHS = llvm::Constant::getNullValue(llvm::VectorType);
-    //llvm::Value *vecRHS = llvm::Constant::getNullValue(llvm::VectorType);
-
+    cout << "shuffle arithmetic" << endl;
     if( op->IsOp("+") ){
-      //return llvm::BinaryOperator::CreateFAdd();
+      return llvm::BinaryOperator::CreateFAdd(lhs, rhs, "", bb);
     }
     else if( op->IsOp("-") ){
+      return llvm::BinaryOperator::CreateFSub(lhs, rhs, "", bb);
     }
     else if( op->IsOp("*") ){
+      return llvm::BinaryOperator::CreateFMul(lhs, rhs, "", bb);
     }
     else if( op->IsOp("/") ){
+      return llvm::BinaryOperator::CreateFDiv(lhs, rhs, "", bb);
     }
     else{
       return NULL;
@@ -393,35 +388,69 @@ llvm::Value* PostfixExpr::Emit(){
 
 /********** Assign Expr Emit **********/
 llvm::Value* AssignExpr::Emit(){
-    Operator *op = this->op;
-    llvm::Value *rVal = this->right->Emit();
-    llvm::Value *lVal = this->left->Emit();
-    llvm::LoadInst* leftLocation = llvm::cast<llvm::LoadInst>(lVal);
+  Operator *op = this->op;
+  llvm::Value *rVal = this->right->Emit();
+  llvm::Value *lVal = this->left->Emit();
+  llvm::LoadInst* leftLocation = llvm::cast<llvm::LoadInst>(lVal);
+
+  llvm::ShuffleVectorInst *shuffleLHS = dynamic_cast<llvm::ShuffleVectorInst*>(this->left->Emit());
+  llvm::ShuffleVectorInst *shuffleRHS = dynamic_cast<llvm::ShuffleVectorInst*>(this->right->Emit());
 
     //Regular assignment
-    if(this->op->IsOp("=")){
-        llvm::Value* sInst = new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+  if(this->op->IsOp("=")){
+    if( (shuffleLHS != NULL) && (shuffleRHS != NULL) ){
+      cout << "noooo"<<endl;
+      FieldAccess *f = dynamic_cast<FieldAccess*>(this->left);
+      llvm::Value* base = f->getBase()->Emit();
+      Identifier *id = f->getField();
+      char *field = id->GetName();
+      for(int i = 0; i < strlen(field); i++){
+        llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
+        llvm::Value* newElmt = llvm::ExtractElementInst::Create(shuffleRHS, num, "", irgen->GetBasicBlock());
+        llvm::InsertElementInst::Create(base, newElmt, num, "", irgen->GetBasicBlock());
+      }
+      new llvm::StoreInst(shuffleRHS, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      
     }
-    //Float assignments
-    else if( ((lVal->getType() == irgen->GetType(Type::floatType)) && (rVal->getType() == irgen->GetType(Type::floatType))) /*||
-      ((lVal->getType() == irgen->GetType(Type::vec2Type)) && (rVal->getType() == irgen->GetType(Type::vec2Type)))*/ ){
-      if( this->op->IsOp("*=") ){
-        llvm::Value *mul = llvm::BinaryOperator::CreateFMul(lVal, rVal, "mulequal", irgen->GetBasicBlock());
-        llvm::Value *sInst = new llvm::StoreInst(mul, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-      }
-      else if( this->op->IsOp("+=") ){
-        llvm::Value *add = llvm::BinaryOperator::CreateFAdd(lVal, rVal, "plusequal", irgen->GetBasicBlock());
-        llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-      }
-      else if( this->op->IsOp("-=") ){
-        llvm::Value *min = llvm::BinaryOperator::CreateFSub(lVal, rVal, "minusequal", irgen->GetBasicBlock());
-        llvm::Value *sInst = new llvm::StoreInst(min, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-      }
-      else if( this->op->IsOp("/=") ){
-        llvm::Value *div = llvm::BinaryOperator::CreateFDiv(lVal, rVal, "divequal", irgen->GetBasicBlock());
-        llvm::Value *sInst = new llvm::StoreInst(div, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-      }
+    else /*if( (shuffleLHS != NULL && shuffleRHS == NULL) )*/{
+      cout << "HI"<<endl;
+      llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+      llvm::Value* newElmt = rVal;
+
+      FieldAccess *f = dynamic_cast<FieldAccess*>(this->left);
+      llvm::Value* base = f->getBase()->Emit();
+      
+
+      //llvm::Value* l = new llvm::LoadInst(lVal, "", irgen->GetBasicBlock());
+      base = llvm::InsertElementInst::Create(base, newElmt, num, "", irgen->GetBasicBlock());
+      new llvm::StoreInst(base, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
     }
+    /*else{
+      if(rVal == NULL) {cout << "what" << endl;}
+      else{
+      new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());}
+    }*/
+  }
+  //Float assignments
+  else if( ((lVal->getType() == irgen->GetType(Type::floatType)) && (rVal->getType() == irgen->GetType(Type::floatType))) /*||
+    ((lVal->getType() == irgen->GetType(Type::vec2Type)) && (rVal->getType() == irgen->GetType(Type::vec2Type)))*/ ){
+    if( this->op->IsOp("*=") ){
+      llvm::Value *mul = llvm::BinaryOperator::CreateFMul(lVal, rVal, "mulequal", irgen->GetBasicBlock());
+      llvm::Value *sInst = new llvm::StoreInst(mul, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+    }
+    else if( this->op->IsOp("+=") ){
+      llvm::Value *add = llvm::BinaryOperator::CreateFAdd(lVal, rVal, "plusequal", irgen->GetBasicBlock());
+      llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+    }
+    else if( this->op->IsOp("-=") ){
+      llvm::Value *min = llvm::BinaryOperator::CreateFSub(lVal, rVal, "minusequal", irgen->GetBasicBlock());
+      llvm::Value *sInst = new llvm::StoreInst(min, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+    }
+    else if( this->op->IsOp("/=") ){
+      llvm::Value *div = llvm::BinaryOperator::CreateFDiv(lVal, rVal, "divequal", irgen->GetBasicBlock());
+      llvm::Value *sInst = new llvm::StoreInst(div, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+    }
+  }
     //Int assignments
     else if( (lVal->getType() == irgen->GetType(Type::intType)) && (rVal->getType() == irgen->GetType(Type::intType)) ){
       if( this->op->IsOp("*=") ){
@@ -442,8 +471,6 @@ llvm::Value* AssignExpr::Emit(){
       }
     }
     return this->left->Emit();
-    //return new llvm::LoadInst(lVal, "", irgen->GetBasicBlock());
-    //return leftLocation;
 }
 
 /********** ArrayAccess Emit ***********/
@@ -478,10 +505,10 @@ llvm::Value* FieldAccess::Emit(){
         else if(*it == 'w')
           idx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
         else
-          idx = llvm::ConstantInt::get(irgen->GetIntType(), 100);
+          idx = llvm::ConstantInt::get(irgen->GetIntType(), 100);//impossible
         swizzles.push_back(idx);
       }
-      if(strlen(f) < 2){
+      if(strlen(f) < 1){
         return llvm::ExtractElementInst::Create(base, idx, "", bb);
       }
       llvm::ArrayRef<llvm::Constant*> swizzleArrayRef(swizzles);
