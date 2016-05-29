@@ -419,7 +419,6 @@ llvm::Value* SwitchStmt::Emit(){
           }
           else{
             y = cases->NumElements();
-            break;
           }
         }
       }
@@ -455,6 +454,11 @@ llvm::Value* SwitchStmt::Emit(){
       //Pop scope and increment BB count
       symtable->popScope();
       BBCount++;
+    }
+    if(currBB != NULL){
+      if(currBB->getTerminator() == NULL && dynamic_cast<Case*>(cases->Nth(x)) != NULL){
+        llvm::BranchInst::Create(BBList->Nth(BBCount), currBB);
+      }
     }
   }
 
