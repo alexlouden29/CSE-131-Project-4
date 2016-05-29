@@ -36,12 +36,14 @@ llvm::Type *IRGenerator::GetType(Type* astTy) const
   return ty;
 }
 
+
 IRGenerator::IRGenerator() :
     context(NULL),
     module(NULL),
     currentFunc(NULL),
     currentBB(NULL)
 {
+  footBlocks = new std::stack<llvm::BasicBlock*>;
 }
 
 IRGenerator::~IRGenerator() {

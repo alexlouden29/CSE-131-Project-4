@@ -214,7 +214,7 @@ llvm::Value* IfStmt::Emit(){
 
     //Create footerBB
     llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
-
+    irgen->footBlocks->push(footBB);
     //Create elseBB
     llvm::BasicBlock* elseBB = llvm::BasicBlock::Create(*context, "else", f);
     
@@ -251,6 +251,15 @@ llvm::Value* IfStmt::Emit(){
     }
     else {
       irgen->SetBasicBlock(footBB);
+      llvm::BasicBlock* pfootBB = irgen->footBlocks->top();
+      if(pfootBB != footBB){
+        irgen->footBlocks->pop();
+        if(pfootBB->getTerminator() == NULL){
+          llvm::BranchInst::Create(footBB, pfootBB);
+        }
+        if(irgen->footBlocks->size() == 1)
+          irgen->footBlocks->pop();
+      }
     }
     
     //Pop scope
