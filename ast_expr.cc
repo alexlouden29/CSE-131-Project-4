@@ -87,7 +87,31 @@ llvm::Value* ArithmeticExpr::Emit(){
   llvm::Value *rhs = this->right->Emit();
   llvm::BasicBlock *bb = irgen->GetBasicBlock();
 
-  if( llvm::cast<llvm::ShuffleVectorInst>( lhs ) != NULL ){
+  //dealing with arithmetic between swizzles
+  llvm::ShuffleVectorInst *shuffleLHS = llvm::cast<llvm::ShuffleVectorInst>(lhs);
+  llvm::ShuffleVectorInst *shuffleRHS = llvm::cast<llvm::ShuffleVectorInst>(rhs);
+  if( ( shuffleLHS != NULL ) && ( shuffleRHS != NULL ) ){
+
+    //setup for shuffle vectors
+    llvm::ShuffleVectorInst *shuffleLHS = llvm::cast<llvm::ShuffleVectorInst>(lhs);
+    llvm::ShuffleVectorInst *shuffleRHS = llvm::cast<llvm::ShuffleVectorInst>(rhs);
+    
+    //put the shuffleVectors into vectors
+    llvm::Value *vecLHS = llvm::Constant::getNullValue(llvm::VectorType);
+    llvm::Value *vecRHS = llvm::Constant::getNullValue(llvm::VectorType);
+
+    if( op->IsOp("+") ){
+      //return llvm::BinaryOperator::CreateFAdd();
+    }
+    else if( op->IsOp("-") ){
+    }
+    else if( op->IsOp("*") ){
+    }
+    else if( op->IsOp("/") ){
+    }
+    else{
+      return NULL;
+    }
   }
 
   //dealing with arithmetic between floats 
