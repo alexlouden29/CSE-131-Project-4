@@ -154,14 +154,13 @@ llvm::Value* ForStmt::Emit(){
           if(pfootBB->getTerminator() == NULL){
             llvm::BranchInst::Create(stepBB, pfootBB);
           }
-          if(irgen->footBlocks->size() == 1)
-            irgen->footBlocks->pop();
         }
       }
     }
 
     //Pop scope
     irgen->loopFootBlocks->pop();
+    irgen->footBlocks->pop();
     symtable->popScope();
     return NULL;   
 }
@@ -216,14 +215,13 @@ llvm::Value* WhileStmt::Emit(){
         if(pfootBB->getTerminator() == NULL){
           llvm::BranchInst::Create(headerBB, pfootBB);
         }
-        if(irgen->footBlocks->size() == 1)
-          irgen->footBlocks->pop();
       }
     }
   }
 
   //Pop Scope
   irgen->loopFootBlocks->pop();
+  irgen->footBlocks->pop();
   symtable->popScope();
   return NULL;
 }
@@ -376,6 +374,7 @@ llvm::Value* SwitchStmt::Emit(){
   llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
   //symtable->breakBlock = footBB;
   irgen->loopFootBlocks->push(footBB);
+  irgen->footBlocks->push(footBB);
 
   //Make Switch Statement
   llvm::SwitchInst* swInst = llvm::SwitchInst::Create(exp, footBB, cases->NumElements(), irgen->GetBasicBlock());
@@ -476,13 +475,12 @@ llvm::Value* SwitchStmt::Emit(){
         if(pfootBB->getTerminator() == NULL){
           llvm::BranchInst::Create(footBB, pfootBB);
         }
-        if(irgen->footBlocks->size() == 1)
-          irgen->footBlocks->pop();
       }
     }
   }
   //Pop scope
   irgen->loopFootBlocks->pop();
+  irgen->footBlocks->pop();
   symtable->popScope();
   return NULL;
 }
