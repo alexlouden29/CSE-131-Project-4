@@ -124,10 +124,9 @@ llvm::Value* ForStmt::Emit(){
     irgen->SetBasicBlock(bodyBB);
 
     //if there's a break or continue in the for loop
-    //symtable->breakBlock = footerBB;
     irgen->loopFootBlocks->push(footerBB);
     irgen->footBlocks->push(footerBB);
-    //symtable->continueBlock = stepBB; //either stepBB or headerBB
+    irgen->continueBlocks->push(stepBB);
 
     body->Emit();
     if(bodyBB->getTerminator() == NULL){
@@ -161,6 +160,7 @@ llvm::Value* ForStmt::Emit(){
     //Pop scope
     irgen->loopFootBlocks->pop();
     irgen->footBlocks->pop();
+    irgen->continueBlocks->pop();
     symtable->popScope();
     return NULL;   
 }
@@ -181,6 +181,11 @@ llvm::Value* WhileStmt::Emit(){
   llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "body", f);
   llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "header", f);
 
+  //if there's a break or continue in the while loop
+  irgen->loopFootBlocks->push(footerBB);
+  irgen->footBlocks->push(footerBB);
+  irgen->continueBlocks->push(headerBB);
+
   //creating branch inst to terminate currentBB
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
   headerBB->moveAfter(irgen->GetBasicBlock());
@@ -193,12 +198,10 @@ llvm::Value* WhileStmt::Emit(){
   //Emit body, set branch after body
   irgen->SetBasicBlock(bodyBB);
 
-  //if there's a break or continue in the while loop
-  irgen->loopFootBlocks->push(footerBB);
-  irgen->footBlocks->push(footerBB);
-
   body->Emit();
-  llvm::BranchInst::Create(headerBB, bodyBB);
+  if(bodyBB->getTerminator() == NULL){
+    llvm::BranchInst::Create(headerBB, bodyBB);
+  }
    
   //Move footer and check if empty
   footerBB->moveAfter(bodyBB);
@@ -222,6 +225,7 @@ llvm::Value* WhileStmt::Emit(){
   //Pop Scope
   irgen->loopFootBlocks->pop();
   irgen->footBlocks->pop();
+  irgen->continueBlocks->pop();
   symtable->popScope();
   return NULL;
 }
@@ -303,10 +307,10 @@ llvm::Value* BreakStmt::Emit(){
   return NULL;
 }
 
+/******* Continue Statement Emit *********/
 llvm::Value* ContinueStmt::Emit(){
-    //irgen->GetOrCreateModule("mod.bc")->dump();
     llvm::BasicBlock *currBB = irgen->GetBasicBlock();
-    llvm::BranchInst::Create( symtable->continueBlock, currBB );
+    llvm::BranchInst::Create( irgen->continueBlocks->top(), currBB );
     return NULL;
 }
 
@@ -475,12 +479,13 @@ llvm::Value* SwitchStmt::Emit(){
         if(pfootBB->getTerminator() == NULL){
           llvm::BranchInst::Create(footBB, pfootBB);
         }
+        if(irgen->footBlocks->size() == 1)
+          irgen->footBlocks->pop();
       }
     }
   }
   //Pop scope
   irgen->loopFootBlocks->pop();
-  irgen->footBlocks->pop();
   symtable->popScope();
   return NULL;
 }
