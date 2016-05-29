@@ -18,6 +18,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/Support/CFG.h"
 #include "ast_type.h"
+#include <stack>
 
 class IRGenerator {
   public:
@@ -26,6 +27,10 @@ class IRGenerator {
 
     llvm::Module   *GetOrCreateModule(const char *moduleID);
     llvm::LLVMContext *GetContext() const { return context; }
+
+    //Stack of footers for nested and break
+    std::stack<llvm::BasicBlock*>* footBlocks;
+    std::stack<llvm::BasicBlock*>* loopFootBlocks;
 
     // Add your helper functions here
     llvm::Function *GetFunction() const;
@@ -41,6 +46,9 @@ class IRGenerator {
 
     llvm::Type *GetType(Type *astTy) const;
 
+    llvm::BasicBlock* PopFootBlock() const;
+    void PushFootBlock(llvm::BasicBlock*);
+
   private:
     llvm::LLVMContext *context;
     llvm::Module      *module;
@@ -48,6 +56,7 @@ class IRGenerator {
     // track which function or basic block is active
     llvm::Function    *currentFunc;
     llvm::BasicBlock  *currentBB;
+
 
     static const char *TargetTriple;
     static const char *TargetLayout;

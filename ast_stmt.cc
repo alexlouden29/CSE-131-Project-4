@@ -124,11 +124,15 @@ llvm::Value* ForStmt::Emit(){
     irgen->SetBasicBlock(bodyBB);
 
     //if there's a break or continue in the for loop
-    symtable->breakBlock = footerBB;
-    symtable->continueBlock = stepBB; //either stepBB or headerBB
+    //symtable->breakBlock = footerBB;
+    irgen->loopFootBlocks->push(footerBB);
+    irgen->footBlocks->push(footerBB);
+    //symtable->continueBlock = stepBB; //either stepBB or headerBB
 
     body->Emit();
-    llvm::BranchInst::Create(stepBB, bodyBB);
+    if(bodyBB->getTerminator() == NULL){
+      llvm::BranchInst::Create(stepBB, bodyBB);
+    }
    
     //Organize step and footer
     stepBB->moveAfter(bodyBB);
@@ -143,9 +147,21 @@ llvm::Value* ForStmt::Emit(){
     }
     else {
       irgen->SetBasicBlock(footerBB);
+      llvm::BasicBlock* pfootBB = irgen->footBlocks->top();
+      if(irgen->footBlocks->size() != 0){
+        if(pfootBB != footerBB){
+          irgen->footBlocks->pop();
+          if(pfootBB->getTerminator() == NULL){
+            llvm::BranchInst::Create(stepBB, pfootBB);
+          }
+          if(irgen->footBlocks->size() == 1)
+            irgen->footBlocks->pop();
+        }
+      }
     }
 
     //Pop scope
+    irgen->loopFootBlocks->pop();
     symtable->popScope();
     return NULL;   
 }
@@ -179,8 +195,8 @@ llvm::Value* WhileStmt::Emit(){
   irgen->SetBasicBlock(bodyBB);
 
   //if there's a break or continue in the while loop
-  symtable->breakBlock = footerBB;
-  symtable->continueBlock = headerBB;
+  irgen->loopFootBlocks->push(footerBB);
+  irgen->footBlocks->push(footerBB);
 
   body->Emit();
   llvm::BranchInst::Create(headerBB, bodyBB);
@@ -190,11 +206,24 @@ llvm::Value* WhileStmt::Emit(){
   if( pred_begin(footerBB) == pred_end(footerBB)) {
     new llvm::UnreachableInst(*context, footerBB);
   }
+  //Mark empty footer Unreachable
   else {
     irgen->SetBasicBlock(footerBB);
+    llvm::BasicBlock* pfootBB = irgen->footBlocks->top();
+    if(irgen->footBlocks->size() != 0){
+      if(pfootBB != footerBB){
+        irgen->footBlocks->pop();
+        if(pfootBB->getTerminator() == NULL){
+          llvm::BranchInst::Create(headerBB, pfootBB);
+        }
+        if(irgen->footBlocks->size() == 1)
+          irgen->footBlocks->pop();
+      }
+    }
   }
 
   //Pop Scope
+  irgen->loopFootBlocks->pop();
   symtable->popScope();
   return NULL;
 }
@@ -214,7 +243,7 @@ llvm::Value* IfStmt::Emit(){
 
     //Create footerBB
     llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
-
+    irgen->footBlocks->push(footBB);
     //Create elseBB
     llvm::BasicBlock* elseBB = llvm::BasicBlock::Create(*context, "else", f);
     
@@ -251,6 +280,17 @@ llvm::Value* IfStmt::Emit(){
     }
     else {
       irgen->SetBasicBlock(footBB);
+      llvm::BasicBlock* pfootBB = irgen->footBlocks->top();
+      if(irgen->footBlocks->size() != 0){
+        if(pfootBB != footBB){
+          irgen->footBlocks->pop();
+          if(pfootBB->getTerminator() == NULL){
+            llvm::BranchInst::Create(footBB, pfootBB);
+          }
+          if(irgen->footBlocks->size() == 1)
+            irgen->footBlocks->pop();
+        }
+      }
     }
     
     //Pop scope
@@ -261,7 +301,7 @@ llvm::Value* IfStmt::Emit(){
 /****** Break Statement *******/
 llvm::Value* BreakStmt::Emit(){
   llvm::BasicBlock *currBB = irgen->GetBasicBlock();
-  llvm::BranchInst::Create( symtable->breakBlock , currBB );
+  llvm::BranchInst::Create( irgen->loopFootBlocks->top(), currBB );
   return NULL;
 }
 
@@ -334,7 +374,8 @@ llvm::Value* SwitchStmt::Emit(){
   
   //Make basic blocks for cases and default
   llvm::BasicBlock* footBB = llvm::BasicBlock::Create(*context, "footer", f);
-  symtable->breakBlock = footBB;
+  //symtable->breakBlock = footBB;
+  irgen->loopFootBlocks->push(footBB);
 
   //Make Switch Statement
   llvm::SwitchInst* swInst = llvm::SwitchInst::Create(exp, footBB, cases->NumElements(), irgen->GetBasicBlock());
@@ -379,6 +420,7 @@ llvm::Value* SwitchStmt::Emit(){
           }
         }
       }
+      //Mark empty footer Unreachable
       symtable->popScope();
       BBCount++;
     }
@@ -427,10 +469,20 @@ llvm::Value* SwitchStmt::Emit(){
   }
   else {
     irgen->SetBasicBlock(footBB);
+    if(irgen->footBlocks->size() != 0){
+      llvm::BasicBlock* pfootBB = irgen->footBlocks->top();
+      if(pfootBB != footBB && pfootBB != NULL){
+        irgen->footBlocks->pop();
+        if(pfootBB->getTerminator() == NULL){
+          llvm::BranchInst::Create(footBB, pfootBB);
+        }
+        if(irgen->footBlocks->size() == 1)
+          irgen->footBlocks->pop();
+      }
+    }
   }
-  
-  
   //Pop scope
+  irgen->loopFootBlocks->pop();
   symtable->popScope();
   return NULL;
 }
