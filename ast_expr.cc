@@ -87,28 +87,6 @@ llvm::Value* ArithmeticExpr::Emit(){
   llvm::Value *rhs = this->right->Emit();
   llvm::BasicBlock *bb = irgen->GetBasicBlock();
 
-  //dealing with arithmetic between swizzles
-  llvm::ShuffleVectorInst *shuffleLHS = dynamic_cast<llvm::ShuffleVectorInst*>(this->left->Emit());
-  llvm::ShuffleVectorInst *shuffleRHS = dynamic_cast<llvm::ShuffleVectorInst*>(this->right->Emit());
-  if( ( shuffleLHS != NULL ) && ( shuffleRHS != NULL ) ){
-    cout << "shuffle arithmetic" << endl;
-    if( op->IsOp("+") ){
-      return llvm::BinaryOperator::CreateFAdd(lhs, rhs, "", bb);
-    }
-    else if( op->IsOp("-") ){
-      return llvm::BinaryOperator::CreateFSub(lhs, rhs, "", bb);
-    }
-    else if( op->IsOp("*") ){
-      return llvm::BinaryOperator::CreateFMul(lhs, rhs, "", bb);
-    }
-    else if( op->IsOp("/") ){
-      return llvm::BinaryOperator::CreateFDiv(lhs, rhs, "", bb);
-    }
-    else{
-      return NULL;
-    }
-  }
-
   //dealing with arithmetic between floats 
   if( lhs->getType() == irgen->GetType(Type::floatType) &&
       rhs->getType() == irgen->GetType(Type::floatType) ){
@@ -398,38 +376,67 @@ llvm::Value* AssignExpr::Emit(){
 
     //Regular assignment
   if(this->op->IsOp("=")){
-    if( (shuffleLHS != NULL) && (shuffleRHS != NULL) ){
-      cout << "noooo"<<endl;
-      FieldAccess *f = dynamic_cast<FieldAccess*>(this->left);
-      llvm::Value* base = f->getBase()->Emit();
-      Identifier *id = f->getField();
-      char *field = id->GetName();
-      for(int i = 0; i < strlen(field); i++){
-        llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
-        llvm::Value* newElmt = llvm::ExtractElementInst::Create(shuffleRHS, num, "", irgen->GetBasicBlock());
-        llvm::InsertElementInst::Create(base, newElmt, num, "", irgen->GetBasicBlock());
+      if( (shuffleLHS != NULL) && (shuffleRHS != NULL) ){
       }
-      new llvm::StoreInst(shuffleRHS, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-      
-    }
-    else /*if( (shuffleLHS != NULL && shuffleRHS == NULL) )*/{
-      cout << "HI"<<endl;
-      llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), 0);
-      llvm::Value* newElmt = rVal;
-
-      FieldAccess *f = dynamic_cast<FieldAccess*>(this->left);
-      llvm::Value* base = f->getBase()->Emit();
-      
-
-      //llvm::Value* l = new llvm::LoadInst(lVal, "", irgen->GetBasicBlock());
-      base = llvm::InsertElementInst::Create(base, newElmt, num, "", irgen->GetBasicBlock());
-      new llvm::StoreInst(base, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-    }
-    /*else{
-      if(rVal == NULL) {cout << "what" << endl;}
+      else if( (shuffleLHS != NULL) && 
+               ((rVal->getType() == irgen->GetType(Type::vec2Type)) || 
+                (rVal->getType() == irgen->GetType(Type::vec3Type)) ||
+                (rVal->getType() == irgen->GetType(Type::vec4Type)) )){
+        //rhs is a vector
+        //cout << "whaa"<<endl;
+        FieldAccess *f = dynamic_cast<FieldAccess*>(this->left);
+        llvm::Value* base = f->getBase()->Emit();
+        llvm::LoadInst* l = llvm::cast<llvm::LoadInst>(base);
+        char*field = f->getField()->GetName();
+        //llvm::LoadInst* l = new llvm::LoadInst(lVal, "", irgen->GetBasicBlock());
+        llvm::Value* vec= base;
+        /*if(strlen(field) == 2){
+          vec = llvm::Constant::getNullValue(irgen->GetType(Type::vec2Type));
+        }
+        else if(strlen(field) == 3){
+          vec = llvm::Constant::getNullValue(irgen->GetType(Type::vec3Type));
+        }
+        else if(strlen(field) == 4){
+          vec = llvm::Constant::getNullValue(irgen->GetType(Type::vec4Type));
+        }*/
+        int count = 0;
+        llvm::Value* leftIdx = NULL;
+        llvm::Value* rightIdx = NULL;
+        for(char*it = field; *it; ++it){
+          if(*it == 'x'){
+            leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+            rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
+            llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
+            vec = llvm::InsertElementInst::Create( vec, newElmt, leftIdx, "", irgen->GetBasicBlock() );
+          }
+          else if(*it == 'y'){
+            leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+            rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
+            llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
+            vec = llvm::InsertElementInst::Create( vec, newElmt, leftIdx, "", irgen->GetBasicBlock() );
+          }
+          else if(*it == 'z'){
+            leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+            rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
+            llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
+            vec = llvm::InsertElementInst::Create( vec, newElmt, leftIdx, "", irgen->GetBasicBlock() );
+          }
+          else if(*it == 'w'){
+            leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+            rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
+            llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
+            vec = llvm::InsertElementInst::Create( vec, newElmt, leftIdx, "", irgen->GetBasicBlock() );
+          }
+          count++;
+        }
+        new llvm::StoreInst(vec, l->getPointerOperand(), irgen->GetBasicBlock());
+      }
+      else if( shuffleLHS != NULL ){
+      }
       else{
-      new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());}
-    }*/
+        //cout << "YO" << endl;
+        new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      }
   }
   //Float assignments
   else if( ((lVal->getType() == irgen->GetType(Type::floatType)) && (rVal->getType() == irgen->GetType(Type::floatType))) /*||
@@ -508,7 +515,7 @@ llvm::Value* FieldAccess::Emit(){
           idx = llvm::ConstantInt::get(irgen->GetIntType(), 100);//impossible
         swizzles.push_back(idx);
       }
-      if(strlen(f) < 1){
+      if(strlen(f) < 2){
         return llvm::ExtractElementInst::Create(base, idx, "", bb);
       }
       llvm::ArrayRef<llvm::Constant*> swizzleArrayRef(swizzles);

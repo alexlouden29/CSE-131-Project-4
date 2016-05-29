@@ -37,7 +37,7 @@ llvm::Value* Program::Emit() {
         
     }
     //Write to bc file
-    //mod->dump();
+    mod->dump();
     llvm::WriteBitcodeToFile(mod, llvm::outs());
 
     return NULL;
