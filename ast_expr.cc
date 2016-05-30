@@ -432,11 +432,6 @@ llvm::Value* AssignExpr::Emit(){
         }
         new llvm::StoreInst(vec, l->getPointerOperand(), irgen->GetBasicBlock());
       }
-      /*else if( (dynamic_cast<llvm::ExtractElementInst*>(lVal) != NULL) &&
-               (dynamic_cast<llvm::ExtractElementInst*>(rVal) != NULL) ){
-        //assigning swizzle to swizzle
-
-      }*/
       else if( dynamic_cast<llvm::ExtractElementInst*>(lVal) != NULL ){
         //cout << "HI" << endl;
         //assigning to single swizzle
@@ -523,8 +518,6 @@ llvm::Value* AssignExpr::Emit(){
       }
     }
     return NULL;
-    //return new llvm::LoadInst(lVal, "", irgen->GetBasicBlock());
-    //return leftLocation;
 }
 
 /********** ArrayAccess Emit ***********/
@@ -572,36 +565,6 @@ llvm::Value* FieldAccess::Emit(){
       return newVec;
     }
   }
-  /*
-  if( this->base != NULL){
-    llvm::Value* base = this->base->Emit();
-    llvm::BasicBlock* bb = irgen->GetBasicBlock();
-    //llvm::LoadInst *l = llvm::cast<llvm::LoadInst>(base);
-    //llvm::Value *location = l->getPointerOperand();
-
-    llvm::Value *idx = NULL;
-    string x = "x", y = "y", z = "z", w = "w";
-    //for
-    if(this->field->GetName() == x){
-      idx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
-    }
-    else if(this->field->GetName() == y){
-      idx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
-    }
-    else if(this->field->GetName() == z){
-      idx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
-    }
-    else if(this->field->GetName() == w){
-      idx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
-    }
-    //if (idx == NULL){
-    //  cout << "fnjdls" << endl;
-    //}
-    
-    llvm::Value *v = llvm::ExtractElementInst::Create(base, idx, "", bb);
-    return v;
-  }
-  */
   return NULL;
 }
 
