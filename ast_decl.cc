@@ -28,6 +28,12 @@ llvm::Value* VarDecl::Emit(){
         //mod->dump();
         llvm::Value* val = new llvm::AllocaInst(t, c, bb);
         symtable->addSymbol(this->GetIdentifier()->GetName(), val); 
+        if(this->GetType() == Type::vec2Type ||
+           this->GetType() == Type::vec3Type ||
+           this->GetType() == Type::vec4Type ){
+          val = llvm::Constant::getNullValue(irgen->GetType(this->GetType()));
+          symtable->addSymbol(this->GetIdentifier()->GetName(), val);
+        }
         return val;
     }
 }

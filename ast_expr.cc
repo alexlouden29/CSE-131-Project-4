@@ -432,6 +432,44 @@ llvm::Value* AssignExpr::Emit(){
         new llvm::StoreInst(vec, l->getPointerOperand(), irgen->GetBasicBlock());
       }
       else if( shuffleLHS != NULL ){
+        //assigning to single swizzle
+        FieldAccess *f = dynamic_cast<FieldAccess*>(this->left);
+        llvm::Value* base = f->getBase()->Emit();
+        llvm::LoadInst* l = llvm::cast<llvm::LoadInst>(base);
+
+        char*field = f->getField()->GetName();
+        llvm::Value* vec= base;
+
+        int count = 0;
+        llvm::Value* leftIdx = NULL;
+        //llvm::Value* rightIdx = NULL;
+        char*it = f->getField()->GetName();
+        if(*it == 'x'){
+          leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+          //rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
+          //llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
+          //llvm::Value* newElmt = llvm::ConstantFP::Create(irgen->GetFloatType(), rVal );
+          vec = llvm::InsertElementInst::Create( vec,rVal, leftIdx, "", irgen->GetBasicBlock() );
+        }
+        else if(*it == 'y'){
+          leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+          //rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
+          //llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
+          vec = llvm::InsertElementInst::Create( vec, rVal, leftIdx, "", irgen->GetBasicBlock() );
+        }
+        else if(*it == 'z'){
+          leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+          //rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
+          //llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
+          vec = llvm::InsertElementInst::Create( vec, rVal, leftIdx, "", irgen->GetBasicBlock() );
+        }
+        else if(*it == 'w'){
+          leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+          //rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
+          //llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
+          vec = llvm::InsertElementInst::Create( vec, rVal, leftIdx, "", irgen->GetBasicBlock() );
+        }
+        new llvm::StoreInst(vec, l->getPointerOperand(), irgen->GetBasicBlock());
       }
       else{
         //cout << "YO" << endl;
