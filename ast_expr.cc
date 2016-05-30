@@ -375,9 +375,9 @@ llvm::Value* AssignExpr::Emit(){
   llvm::ShuffleVectorInst *shuffleRHS = dynamic_cast<llvm::ShuffleVectorInst*>(this->right->Emit());
 
     //Regular assignment
-<<<<<<< HEAD
   if(this->op->IsOp("=")){
       if( (shuffleLHS != NULL) && (shuffleRHS != NULL) ){
+        
       }
       else if( (shuffleLHS != NULL) && 
                ((rVal->getType() == irgen->GetType(Type::vec2Type)) || 
@@ -432,7 +432,13 @@ llvm::Value* AssignExpr::Emit(){
         }
         new llvm::StoreInst(vec, l->getPointerOperand(), irgen->GetBasicBlock());
       }
-      else if( shuffleLHS != NULL ){
+      /*else if( (dynamic_cast<llvm::ExtractElementInst*>(lVal) != NULL) &&
+               (dynamic_cast<llvm::ExtractElementInst*>(rVal) != NULL) ){
+        //assigning swizzle to swizzle
+
+      }*/
+      else if( dynamic_cast<llvm::ExtractElementInst*>(lVal) != NULL ){
+        //cout << "HI" << endl;
         //assigning to single swizzle
         FieldAccess *f = dynamic_cast<FieldAccess*>(this->left);
         llvm::Value* base = f->getBase()->Emit();
@@ -447,27 +453,18 @@ llvm::Value* AssignExpr::Emit(){
         char*it = f->getField()->GetName();
         if(*it == 'x'){
           leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
-          //rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
-          //llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
-          //llvm::Value* newElmt = llvm::ConstantFP::Create(irgen->GetFloatType(), rVal );
           vec = llvm::InsertElementInst::Create( vec,rVal, leftIdx, "", irgen->GetBasicBlock() );
         }
         else if(*it == 'y'){
           leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
-          //rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
-          //llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
           vec = llvm::InsertElementInst::Create( vec, rVal, leftIdx, "", irgen->GetBasicBlock() );
         }
         else if(*it == 'z'){
           leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
-          //rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
-          //llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
           vec = llvm::InsertElementInst::Create( vec, rVal, leftIdx, "", irgen->GetBasicBlock() );
         }
         else if(*it == 'w'){
           leftIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
-          //rightIdx = llvm::ConstantInt::get(irgen->GetIntType(), count);
-          //llvm::Value* newElmt = llvm::ExtractElementInst::Create( rVal, rightIdx, "", irgen->GetBasicBlock() );
           vec = llvm::InsertElementInst::Create( vec, rVal, leftIdx, "", irgen->GetBasicBlock() );
         }
         new llvm::StoreInst(vec, l->getPointerOperand(), irgen->GetBasicBlock());
@@ -475,9 +472,7 @@ llvm::Value* AssignExpr::Emit(){
       else{
         //cout << "YO" << endl;
         new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-=======
-    if(this->op->IsOp("=")){
-        llvm::Value* sInst = new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
+      }
       return rVal;
     }
     //Float assignments
@@ -502,28 +497,7 @@ llvm::Value* AssignExpr::Emit(){
         llvm::Value *div = llvm::BinaryOperator::CreateFDiv(lVal, rVal, "divequal", irgen->GetBasicBlock());
         llvm::Value *sInst = new llvm::StoreInst(div, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
         return div;
->>>>>>> d1d9bd76459ad32c0360096eefbcb21a31037c80
       }
-  }
-  //Float assignments
-  else if( ((lVal->getType() == irgen->GetType(Type::floatType)) && (rVal->getType() == irgen->GetType(Type::floatType))) /*||
-    ((lVal->getType() == irgen->GetType(Type::vec2Type)) && (rVal->getType() == irgen->GetType(Type::vec2Type)))*/ ){
-    if( this->op->IsOp("*=") ){
-      llvm::Value *mul = llvm::BinaryOperator::CreateFMul(lVal, rVal, "mulequal", irgen->GetBasicBlock());
-      llvm::Value *sInst = new llvm::StoreInst(mul, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-    }
-    else if( this->op->IsOp("+=") ){
-      llvm::Value *add = llvm::BinaryOperator::CreateFAdd(lVal, rVal, "plusequal", irgen->GetBasicBlock());
-      llvm::Value *sInst = new llvm::StoreInst(add, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-    }
-    else if( this->op->IsOp("-=") ){
-      llvm::Value *min = llvm::BinaryOperator::CreateFSub(lVal, rVal, "minusequal", irgen->GetBasicBlock());
-      llvm::Value *sInst = new llvm::StoreInst(min, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-    }
-    else if( this->op->IsOp("/=") ){
-      llvm::Value *div = llvm::BinaryOperator::CreateFDiv(lVal, rVal, "divequal", irgen->GetBasicBlock());
-      llvm::Value *sInst = new llvm::StoreInst(div, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
-    }
   }
     //Int assignments
     else if( (lVal->getType() == irgen->GetType(Type::intType)) && (rVal->getType() == irgen->GetType(Type::intType)) ){
@@ -548,13 +522,9 @@ llvm::Value* AssignExpr::Emit(){
         return div;
       }
     }
-<<<<<<< HEAD
-    return this->left->Emit();
-=======
     return NULL;
     //return new llvm::LoadInst(lVal, "", irgen->GetBasicBlock());
     //return leftLocation;
->>>>>>> d1d9bd76459ad32c0360096eefbcb21a31037c80
 }
 
 /********** ArrayAccess Emit ***********/
