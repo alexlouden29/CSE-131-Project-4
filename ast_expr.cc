@@ -79,10 +79,9 @@ llvm::Value* ArithmeticExpr::Emit(){
         }
       }
 
-      else if(oldVal->getType() == irgen->GetType(Type::vec2Type) ||
+    else if(oldVal->getType() == irgen->GetType(Type::vec2Type) ||
               oldVal->getType() == irgen->GetType(Type::vec3Type) ||
               oldVal->getType() == irgen->GetType(Type::vec4Type) ){
-cout << "whaa" << endl;
         llvm::Type* ty = oldVal->getType();
         llvm::Value* vec = llvm::Constant::getNullValue(ty);
         int vecNum = 0;
@@ -95,22 +94,20 @@ cout << "whaa" << endl;
         else if( oldVal->getType() == irgen->GetType(Type::vec4Type) ){
           vecNum = 4;
         }
-
-        llvm::Value*toInsert = NULL;
-        llvm::Value* one = llvm::ConstantFP::get(irgen->GetFloatType(), 1.0);
+        llvm::Value*one = llvm::ConstantFP::get(irgen->GetFloatType(), 1.0);
         for(int i = 0; i < vecNum; i++){
-          llvm::Value *num = llvm::ConstantInt::get(irgen->GetIntType(), i);
-          llvm::Value *elmt = llvm::ExtractElementInst::Create(oldVal, num, "", irgen->GetBasicBlock());
-          if( this->op->IsOp("++") )
-            toInsert = llvm::BinaryOperator::CreateFAdd( elmt, one );
-          if( this->op->IsOp("--") )
-            toInsert = llvm::BinaryOperator::CreateFSub( elmt, one );
-          llvm::InsertElementInst::Create(vec, toInsert, num, "", irgen->GetBasicBlock());
+          llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
+          vec = llvm::InsertElementInst::Create(vec, one, num, "", bb);
         }
-        llvm::LoadInst* l = llvm::cast<llvm::LoadInst>(oldVal);
-        new llvm::StoreInst(vec, location, irgen->GetBasicBlock());
 
-        return vec;
+        llvm::Value* toStore = NULL;
+        if(this->op->IsOp("--"))
+          toStore = llvm::BinaryOperator::CreateFSub( oldVal, vec, "", bb );
+        if(this->op->IsOp("++"))
+          toStore = llvm::BinaryOperator::CreateFAdd( oldVal, vec, "", bb );
+        new llvm::StoreInst( toStore, location, bb );
+        return toStore;
+
       }
 
   }
@@ -432,7 +429,6 @@ llvm::Value* PostfixExpr::Emit(){
     else if(oldVal->getType() == irgen->GetType(Type::vec2Type) ||
               oldVal->getType() == irgen->GetType(Type::vec3Type) ||
               oldVal->getType() == irgen->GetType(Type::vec4Type) ){
-//cout << "postfix"<<endl;
         llvm::Type* ty = oldVal->getType();
         llvm::Value* vec = llvm::Constant::getNullValue(ty);
         int vecNum = 0;
@@ -445,22 +441,18 @@ llvm::Value* PostfixExpr::Emit(){
         else if( oldVal->getType() == irgen->GetType(Type::vec4Type) ){
           vecNum = 4;
         }
-
-        llvm::Value*toInsert = NULL;
-        llvm::Value* one = llvm::ConstantFP::get(irgen->GetFloatType(), 1.0);
+        llvm::Value*one = llvm::ConstantFP::get(irgen->GetFloatType(), 1.0);
         for(int i = 0; i < vecNum; i++){
-          llvm::Value *num = llvm::ConstantInt::get(irgen->GetIntType(), i);
-          llvm::Value *elmt = llvm::ExtractElementInst::Create(oldVal, num, "", irgen->GetBasicBlock());
-          if( this->op->IsOp("++") )
-            toInsert = llvm::BinaryOperator::CreateFAdd( elmt, one );
-          if( this->op->IsOp("--") )
-            toInsert = llvm::BinaryOperator::CreateFSub( elmt, one );
-          llvm::InsertElementInst::Create(vec, toInsert, num, "", irgen->GetBasicBlock());
+          llvm::Value* num = llvm::ConstantInt::get(irgen->GetIntType(), i);
+          vec = llvm::InsertElementInst::Create(vec, one, num, "", bb);
         }
-        llvm::LoadInst* l = llvm::cast<llvm::LoadInst>(oldVal);
-        new llvm::StoreInst(vec, location, irgen->GetBasicBlock());
+        llvm::Value* toStore = NULL;
+        if( this->op->IsOp("--"))
+          toStore = llvm::BinaryOperator::CreateFSub( oldVal, vec, "", bb );
+        if(this->op->IsOp("++"))
+          toStore = llvm::BinaryOperator::CreateFAdd( oldVal, vec, "", bb );
+        new llvm::StoreInst( toStore, location, bb );
 
-        //return vec;
       }
 
     return oldVal;
@@ -478,7 +470,6 @@ llvm::Value* AssignExpr::Emit(){
     //Regular assignment
   if(this->op->IsOp("=")){
       if( (shuffleLHS != NULL) && (shuffleRHS != NULL) ){
-        //cout << "damn"<<endl;
         FieldAccess *f = dynamic_cast<FieldAccess*>(this->left);
         llvm::Value* base = f->getBase()->Emit();
         llvm::LoadInst* l = llvm::cast<llvm::LoadInst>(base);
@@ -522,7 +513,6 @@ llvm::Value* AssignExpr::Emit(){
                 (rVal->getType() == irgen->GetType(Type::vec3Type)) ||
                 (rVal->getType() == irgen->GetType(Type::vec4Type)) )){
         //rhs is a vector
-        //cout << "whaa"<<endl;
         FieldAccess *f = dynamic_cast<FieldAccess*>(this->left);
         llvm::Value* base = f->getBase()->Emit();
         llvm::LoadInst* l = llvm::cast<llvm::LoadInst>(base);
@@ -565,7 +555,6 @@ llvm::Value* AssignExpr::Emit(){
          //cout << "WHAT" << endl;
       }*/
       else if( dynamic_cast<llvm::ExtractElementInst*>(lVal) != NULL ){
-        //cout << "HI" << endl;
         //assigning to single swizzle
         FieldAccess *f = dynamic_cast<FieldAccess*>(this->left);
         llvm::Value* base = f->getBase()->Emit();
@@ -596,7 +585,6 @@ llvm::Value* AssignExpr::Emit(){
         new llvm::StoreInst(vec, l->getPointerOperand(), irgen->GetBasicBlock());
       }
       else{
-        //cout << "YO" << endl;
         new llvm::StoreInst(rVal, leftLocation->getPointerOperand(), irgen->GetBasicBlock());
       }
       return rVal;
