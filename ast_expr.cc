@@ -57,6 +57,8 @@ llvm::Value* ArithmeticExpr::Emit(){
       else if( oldVal->getType() == irgen->GetFloatType() ){
         llvm::Type* type = irgen->GetFloatType();
         llvm::Constant* one = llvm::ConstantFP::get(type,1.0);
+        llvm::Constant* negOne = llvm::ConstantFP::get(type,-1.0);
+
         if( op->IsOp("++") ){
           //adding one
           llvm::Value *inc = llvm::BinaryOperator::CreateFAdd(oldVal, one, "", bb);
@@ -70,12 +72,11 @@ llvm::Value* ArithmeticExpr::Emit(){
           return dec;
         }
         if( op->IsOp("+") ){
-          //llvm::Value* sInst = new llvm::StoreInst(oldVal, location, bb);
           return oldVal;
         }
         if( op->IsOp("-") ){
-          //llvm::Value* sInst = new llvm::StoreInst(oldVal, location, bb);
-          return oldVal;
+          llvm::Value* mul =  llvm::BinaryOperator::CreateFMul(oldVal, negOne, "", bb);
+          return mul;
         }
       }
 
