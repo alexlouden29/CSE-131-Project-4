@@ -71,6 +71,9 @@ llvm::Function *IRGenerator::GetFunction() const {
 }
 
 void IRGenerator::SetBasicBlock(llvm::BasicBlock *bb) {
+   if(currentBB != NULL)
+     if(pred_begin(currentBB) == pred_end(currentBB) && currentBB->getTerminator() ==NULL)
+       new llvm::UnreachableInst(*context, currentBB);
    currentBB = bb;
 }
 

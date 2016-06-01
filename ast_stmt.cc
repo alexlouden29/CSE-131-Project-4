@@ -36,6 +36,10 @@ llvm::Value* Program::Emit() {
         decls->Nth(x)->Emit();
         
     }
+    if(irgen->GetBasicBlock() != NULL)
+      if(irgen->GetBasicBlock()->getTerminator() == NULL && pred_begin(irgen->GetBasicBlock()) == pred_begin(irgen->GetBasicBlock()))
+        new llvm::UnreachableInst(*irgen->GetContext(), irgen->GetBasicBlock());
+
     //Write to bc file
     mod->dump();
     llvm::WriteBitcodeToFile(mod, llvm::outs());
@@ -50,10 +54,14 @@ llvm::Value* ReturnStmt::Emit(){
     llvm::LLVMContext *context = irgen->GetContext();
     llvm::Function *func = irgen->GetFunction();
     if(func->getReturnType() == irgen->GetVoidType()){
-        return llvm::ReturnInst::Create( *context, bb );
+        llvm::ReturnInst* r = llvm::ReturnInst::Create( *context, bb );
+        irgen->SetBasicBlock(llvm::BasicBlock::Create(*irgen->GetContext(), "dead", irgen->GetFunction()));
+        return r;
     }
     llvm::Value *returnExpr = e->Emit();
-    return llvm::ReturnInst::Create( *context, returnExpr, bb);
+    llvm::ReturnInst* r = llvm::ReturnInst::Create( *context, returnExpr, bb);
+    irgen->SetBasicBlock(llvm::BasicBlock::Create(*irgen->GetContext(), "dead", irgen->GetFunction()));
+    return r;
 }
 
 /*******  Stamtement Block Emit *******/
@@ -206,9 +214,9 @@ llvm::Value* WhileStmt::Emit(){
   //Move footer and check if empty
   footerBB->moveAfter(bodyBB);
   if( pred_begin(footerBB) == pred_end(footerBB)) {
+    //Mark empty footer Unreachable
     new llvm::UnreachableInst(*context, footerBB);
   }
-  //Mark empty footer Unreachable
   else {
     irgen->SetBasicBlock(footerBB);
     llvm::BasicBlock* pfootBB = irgen->footBlocks->top();
@@ -304,14 +312,16 @@ llvm::Value* IfStmt::Emit(){
 llvm::Value* BreakStmt::Emit(){
   llvm::BasicBlock *currBB = irgen->GetBasicBlock();
   llvm::BranchInst::Create( irgen->loopFootBlocks->top(), currBB );
+  irgen->SetBasicBlock(llvm::BasicBlock::Create(*irgen->GetContext(), "dead", irgen->GetFunction()));
   return NULL;
 }
 
 /******* Continue Statement Emit *********/
 llvm::Value* ContinueStmt::Emit(){
-    llvm::BasicBlock *currBB = irgen->GetBasicBlock();
-    llvm::BranchInst::Create( irgen->continueBlocks->top(), currBB );
-    return NULL;
+  llvm::BasicBlock *currBB = irgen->GetBasicBlock();
+  llvm::BranchInst::Create( irgen->continueBlocks->top(), currBB );
+  irgen->SetBasicBlock(llvm::BasicBlock::Create(*irgen->GetContext(), "dead", irgen->GetFunction()));
+  return NULL;
 }
 
 //Unecessary I think
@@ -391,11 +401,11 @@ llvm::Value* SwitchStmt::Emit(){
     llvm::BasicBlock* currBB = NULL;
     if(BBCount < BBList->NumElements() ){
       currBB = BBList->Nth(BBCount);
-      irgen->SetBasicBlock(currBB);
     }
     Stmt* s = cases->Nth(x);
     //Emit if case
     if(dynamic_cast<Case*>(s) != NULL){
+      irgen->SetBasicBlock(currBB);
       Case* c;
       c = dynamic_cast<Case*>(s);
       llvm::Value* labelVal = c->getLabel()->Emit();
@@ -428,6 +438,7 @@ llvm::Value* SwitchStmt::Emit(){
     }
     //Emit if default
     else if( dynamic_cast<Default*>(cases->Nth(x)) != NULL ){
+      irgen->SetBasicBlock(currBB);
       //Create default, push scope and emit
       swInst->setDefaultDest(defaultBB);
       scope s;
