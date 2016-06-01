@@ -41,7 +41,7 @@ llvm::Value* Program::Emit() {
         new llvm::UnreachableInst(*irgen->GetContext(), irgen->GetBasicBlock());
 
     //Write to bc file
-    mod->dump();
+    //mod->dump();
     llvm::WriteBitcodeToFile(mod, llvm::outs());
 
     return NULL;

@@ -1,0 +1,11 @@
+What an adventure this assignment has been.
+
+The first thing to do, was understand what the point of everything was.  That was a very hard thing about the third assignment, and once that was understood it became much easier.  However, this is where we struggled to most. We eventually just started writing code despite not knowing what we were doing because we couldn't understand.  I think fooling around with the code, and asking mountains of misguided questions of my friends and on piazza eventually led to my epiphany.
+
+I was thinking entirely procedually, while the assebmly code construction was actually more of a structure that needed to be build with all options written, rather than checking which options were correct and writing those.  Upon this discovery, I explained it to my partner, and I blew through the for and while loops while my partner finished up everything else needed for the checkpoint.
+
+We failed to get switch complete however, and I later discovered the culprit was most likely a comment I had left in. -_-
+
+At this point, the student test suite was out, and that drove our coding.  Once one test passed, we looked at what made the next one fail. This led to "Oh, we haven't even done conditional expression yet" and we would move to complete that.  Sometimes we collaborated on particularly difficult chunks, other times we took on different challenges and used git to merge our work.  Later the offcial TA tests were realeased, and those served as a driving force too.  Some issues stuck around for a while, both of us tried and failed to get swizzle working, and kept a temporary standin technique that allowed at least other tests to run properly.  Piece by piece we caught each edge case, using piazza to guide us on technique for many of the more difficult problems.  Duplicated code is abound, but the volume of issues we had to tackle left cleanliness as a minor importance.
+
+The extensions on both the checkpoint and final project were a huge help. Each issue that comes up when coding this compilier would randomly take several hours, leading to a considerable amount of unexpected work time.
