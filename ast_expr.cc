@@ -371,8 +371,8 @@ llvm::Value* AssignExpr::Emit(){
   llvm::Value *lVal = this->left->Emit();
   llvm::LoadInst* leftLocation = llvm::cast<llvm::LoadInst>(lVal);
 
-  llvm::ShuffleVectorInst *shuffleLHS = dynamic_cast<llvm::ShuffleVectorInst*>(this->left->Emit());
-  llvm::ShuffleVectorInst *shuffleRHS = dynamic_cast<llvm::ShuffleVectorInst*>(this->right->Emit());
+  llvm::ShuffleVectorInst *shuffleLHS = dynamic_cast<llvm::ShuffleVectorInst*>(lVal);
+  llvm::ShuffleVectorInst *shuffleRHS = dynamic_cast<llvm::ShuffleVectorInst*>(rVal);
 
     //Regular assignment
   if(this->op->IsOp("=")){
